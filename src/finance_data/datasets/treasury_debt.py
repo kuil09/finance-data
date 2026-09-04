@@ -17,6 +17,8 @@ from ..storage import (
 from ..treasury import DEBT_TO_PENNY_FIELDS, FetchResult, TreasuryFiscalDataAdapter
 
 EXPECTED_SOURCE_FIELDS = frozenset(DEBT_TO_PENNY_FIELDS)
+COMPONENT_COVERAGE_START = date(2005, 3, 31)
+NULL_TEXT = "null"
 
 
 class DatasetValidationError(ValueError):
@@ -45,8 +47,12 @@ class SyncSummary:
         }
 
 
+def _is_null(value: str | None) -> bool:
+    return value in (None, "", "null", "None")
+
+
 def _decimal(value: str, field: str) -> Decimal:
-    if value in ("", "null", "None"):
+    if _is_null(value):
         raise DatasetValidationError(f"{field} is null")
     try:
         decimal_value = Decimal(value)
@@ -55,6 +61,18 @@ def _decimal(value: str, field: str) -> Decimal:
     if not decimal_value.is_finite() or decimal_value < 0:
         raise DatasetValidationError(f"{field} must be a non-negative finite decimal")
     return decimal_value
+
+
+def _optional_decimal(value: str, field: str) -> Decimal | None:
+    if _is_null(value):
+        return None
+    return _decimal(value, field)
+
+
+def _normalized_decimal(value: str, field: str, *, nullable: bool = False) -> str:
+    if nullable and _is_null(value):
+        return NULL_TEXT
+    return format(_decimal(value, field), "f")
 
 
 def validate_source_record(record: Mapping[str, str]) -> None:
@@ -76,10 +94,22 @@ def validate_source_record(record: Mapping[str, str]) -> None:
     if source_line < 0:
         raise DatasetValidationError("src_line_nbr must be non-negative")
 
-    held = _decimal(record["debt_held_public_amt"], "debt_held_public_amt")
-    intragov = _decimal(record["intragov_hold_amt"], "intragov_hold_amt")
+    period = date.fromisoformat(record["record_date"])
+    held = _optional_decimal(record["debt_held_public_amt"], "debt_held_public_amt")
+    intragov = _optional_decimal(record["intragov_hold_amt"], "intragov_hold_amt")
     total = _decimal(record["tot_pub_debt_out_amt"], "tot_pub_debt_out_amt")
-    if total != held + intragov:
+
+    if (held is None) != (intragov is None):
+        raise DatasetValidationError(
+            f"component nullability mismatch for {record['record_date']}: "
+            "public and intragovernmental amounts must be present or null together"
+        )
+    if period >= COMPONENT_COVERAGE_START and held is None:
+        raise DatasetValidationError(
+            f"unexpected missing debt components on or after {COMPONENT_COVERAGE_START.isoformat()}: "
+            f"{record['record_date']}"
+        )
+    if held is not None and total != held + intragov:
         raise DatasetValidationError(
             f"source invariant failed for {record['record_date']}: total != public + intragov"
         )
@@ -89,16 +119,22 @@ def normalize_source_record(record: Mapping[str, str]) -> dict[str, str]:
     validate_source_record(record)
     return {
         "period": record["record_date"],
-        "debt_held_by_public": format(Decimal(record["debt_held_public_amt"]), "f"),
-        "intragovernmental_holdings": format(Decimal(record["intragov_hold_amt"]), "f"),
-        "total_public_debt_outstanding": format(Decimal(record["tot_pub_debt_out_amt"]), "f"),
+        "debt_held_by_public": _normalized_decimal(
+            record["debt_held_public_amt"], "debt_held_public_amt", nullable=True
+        ),
+        "intragovernmental_holdings": _normalized_decimal(
+            record["intragov_hold_amt"], "intragov_hold_amt", nullable=True
+        ),
+        "total_public_debt_outstanding": _normalized_decimal(
+            record["tot_pub_debt_out_amt"], "tot_pub_debt_out_amt"
+        ),
         "source_line_number": str(int(record["src_line_nbr"])),
         "source_record_sha256": source_record_hash(record),
     }
 
 
 def canonical_source_records(root: Path) -> list[dict[str, str]]:
-    """Resolve preserved snapshots, with the latest retrieval winning by record_date.
+    """Resolve all preserved snapshots, with the latest retrieval winning by record_date.
 
     Corrections are not discarded: earlier source values remain in immutable raw snapshots,
     while the latest retrieved source record is the canonical normalized representation.
@@ -148,10 +184,19 @@ def validate(root: Path) -> dict[str, object]:
         previous = period
         normalized_by_period[period] = row
 
-        held = _decimal(row["debt_held_by_public"], "debt_held_by_public")
-        intragov = _decimal(row["intragovernmental_holdings"], "intragovernmental_holdings")
+        held = _optional_decimal(row["debt_held_by_public"], "debt_held_by_public")
+        intragov = _optional_decimal(
+            row["intragovernmental_holdings"], "intragovernmental_holdings"
+        )
         total = _decimal(row["total_public_debt_outstanding"], "total_public_debt_outstanding")
-        if total != held + intragov:
+        if (held is None) != (intragov is None):
+            raise DatasetValidationError(f"normalized component nullability mismatch for {period}")
+        if date.fromisoformat(period) >= COMPONENT_COVERAGE_START and held is None:
+            raise DatasetValidationError(
+                f"unexpected normalized missing debt components on or after "
+                f"{COMPONENT_COVERAGE_START.isoformat()}: {period}"
+            )
+        if held is not None and total != held + intragov:
             raise DatasetValidationError(f"normalized invariant failed for {period}")
 
     for source in source_records:
@@ -163,11 +208,16 @@ def validate(root: Path) -> dict[str, object]:
         if row != expected:
             raise DatasetValidationError(f"normalized record does not match source: {period}")
 
+    component_null_records = sum(
+        1 for row in normalized if _is_null(row["debt_held_by_public"])
+    )
     return {
         "dataset": DATASET_ID,
         "records": len(normalized),
         "first_period": normalized[0]["period"] if normalized else None,
         "latest_period": normalized[-1]["period"] if normalized else None,
+        "component_null_records": component_null_records,
+        "component_coverage_start": COMPONENT_COVERAGE_START.isoformat(),
         "status": "PASS",
     }
 
