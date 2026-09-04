@@ -1,0 +1,23 @@
+{
+  "id": "us_treasury_fiscal_data",
+  "organization": {
+    "name": "U.S. Department of the Treasury, Bureau of the Fiscal Service",
+    "url": "https://fiscaldata.treasury.gov/"
+  },
+  "authority": {
+    "level": "primary",
+    "official": true
+  },
+  "access": {
+    "type": "rest",
+    "base_url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/",
+    "authentication": "none",
+    "format": "json",
+    "pagination": "page[number]/page[size]"
+  },
+  "data_contract": {
+    "api_values_are_strings": true,
+    "raw_payloads_are_preserved": true,
+    "retrieval_metadata_is_preserved": true
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "content_sha256": "13877463097e555aa482d30da9e7304aebff4bbafab16239ed1aadc20175ec30",
+  "pages": 2,
+  "record_count": 8386,
+  "retrieved_at": "2026-09-04T22:04:52.335605Z",
+  "source": "us_treasury_fiscal_data",
+  "source_dataset": "debt_to_penny",
+  "source_total_count": 8386
+}

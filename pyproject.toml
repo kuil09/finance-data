@@ -1,0 +1,6 @@
+[project]
+name = "finance-data"
+version = "0.1.0"
+description = "Normalized distribution layer for reliable public economic data"
+requires-python = ">=3.11"
+dependencies = []
