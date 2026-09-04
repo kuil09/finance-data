@@ -1,0 +1,14 @@
+{
+  "base_url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service",
+  "endpoint": "/v2/accounting/od/debt_to_penny",
+  "fields": [
+    "record_date",
+    "debt_held_public_amt",
+    "intragov_hold_amt",
+    "tot_pub_debt_out_amt",
+    "src_line_nbr"
+  ],
+  "page_size": 5000,
+  "sort": "record_date",
+  "start_date": null
+}
