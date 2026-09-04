@@ -75,6 +75,21 @@ class TreasuryDebtTests(unittest.TestCase):
         with self.assertRaises(DatasetValidationError):
             normalize_source_record(unexpected)
 
+    def test_known_source_invariant_exception_is_preserved(self):
+        source_anomaly = row(
+            "2011-02-01",
+            "9482575172379.45",
+            "4627267706524.08",
+            "14109842878903.50",
+        )
+        normalized = normalize_source_record(source_anomaly)
+        self.assertEqual(normalized["total_public_debt_outstanding"], "14109842878903.50")
+
+    def test_unknown_invariant_exception_still_fails(self):
+        unexpected = row("2011-02-02", "100.00", "50.00", "149.99")
+        with self.assertRaises(DatasetValidationError):
+            normalize_source_record(unexpected)
+
     def test_one_sided_component_null_fails(self):
         invalid = row("1999-01-04", "null", "100.00", "100.00")
         with self.assertRaises(DatasetValidationError):
