@@ -141,6 +141,39 @@ class TreasuryDebtTests(unittest.TestCase):
             self.assertEqual(rows[-1]["period"], "2024-01-05")
             self.assertEqual(validate(root)["records"], 4)
 
+    def test_source_reversion_to_prior_payload_becomes_canonical(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            original = FakeAdapter(BASE_ROWS)
+            sync(root, full=True, adapter=original, retrieved_at=datetime(2024, 1, 5, tzinfo=timezone.utc))
+
+            corrected_rows = BASE_ROWS[:2] + [
+                row("2024-01-04", "27000000000006.00", "7000000000006.00", "34000000000012.00")
+            ]
+            corrected = FakeAdapter(corrected_rows)
+            sync(root, full=True, adapter=corrected, retrieved_at=datetime(2024, 1, 6, tzinfo=timezone.utc))
+            self.assertEqual(
+                read_normalized_rows(root)[-1]["total_public_debt_outstanding"],
+                "34000000000012.00",
+            )
+
+            reverted = sync(
+                root,
+                full=True,
+                adapter=original,
+                retrieved_at=datetime(2024, 1, 7, tzinfo=timezone.utc),
+            )
+            self.assertTrue(reverted.raw_snapshot_created)
+            self.assertEqual(
+                read_normalized_rows(root)[-1]["total_public_debt_outstanding"],
+                "34000000000009.99",
+            )
+            snapshots = list((root / "data/raw/us_treasury_fiscal_data/debt_to_penny").glob("sha256-*"))
+            receipts = list((root / "data/raw/us_treasury_fiscal_data/debt_to_penny/_receipts").glob("*.json"))
+            self.assertEqual(len(snapshots), 2)
+            self.assertEqual(len(receipts), 3)
+            self.assertEqual(validate(root)["status"], "PASS")
+
     def test_raw_snapshot_checksum_detects_tampering(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
