@@ -23,23 +23,29 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf '%s\n' "${{ github.event.pull_request.head.sha }}" > /tmp/source.commit
           PYTHONPATH=src python -m unittest discover -s tests -v
-      - name: Fetch full Treasury history
+      - name: Diagnose complete source history
         shell: bash
         run: |
           set -euo pipefail
-          ./bin/finance-data sync us.fiscal.debt.outstanding --full | tee /tmp/backfill-summary.json
-          ./bin/finance-data validate us.fiscal.debt.outstanding
-          tar -czf /tmp/treasury-debt-backfill.tar.gz data/
-          sha256sum /tmp/treasury-debt-backfill.tar.gz > /tmp/treasury-debt-backfill.tar.gz.sha256
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mission-backfill-3-110943b0
-          path: |
-            /tmp/treasury-debt-backfill.tar.gz
-            /tmp/treasury-debt-backfill.tar.gz.sha256
-            /tmp/backfill-summary.json
-            /tmp/source.commit
-          retention-days: 1
-          if-no-files-found: error
+          PYTHONPATH=src python - <<'PY'
+          from collections import Counter
+          from finance_data.treasury import TreasuryFiscalDataAdapter
+
+          result = TreasuryFiscalDataAdapter().fetch_debt_to_penny()
+          nullable = ("debt_held_public_amt", "intragov_hold_amt", "tot_pub_debt_out_amt")
+          rows = []
+          for record in result.records:
+              null_fields = tuple(field for field in nullable if record.get(field) in (None, "", "null", "None"))
+              if null_fields:
+                  rows.append((record["record_date"], null_fields, record))
+
+          print(f"source_records={len(result.records)}")
+          print(f"source_total_count={result.source_total_count}")
+          print(f"null_records={len(rows)}")
+          print("null_patterns=", Counter(fields for _, fields, _ in rows))
+          if rows:
+              print("first_null=", rows[0])
+              print("last_null=", rows[-1])
+              print("first_non_null_after=", next((r for r in result.records if r["record_date"] > rows[-1][0]), None))
+          PY
