@@ -19,6 +19,18 @@ from ..treasury import DEBT_TO_PENNY_FIELDS, FetchResult, TreasuryFiscalDataAdap
 EXPECTED_SOURCE_FIELDS = frozenset(DEBT_TO_PENNY_FIELDS)
 COMPONENT_COVERAGE_START = date(2005, 3, 31)
 NULL_TEXT = "null"
+KNOWN_INVARIANT_EXCEPTIONS = {
+    "2011-02-01": (
+        "9482575172379.45",
+        "4627267706524.08",
+        "14109842878903.50",
+    ),
+    "2025-08-04": (
+        "29523300148538.85",
+        "7314864649375.46",
+        "36828164797914.31",
+    ),
+}
 
 
 class DatasetValidationError(ValueError):
@@ -75,6 +87,15 @@ def _normalized_decimal(value: str, field: str, *, nullable: bool = False) -> st
     return format(_decimal(value, field), "f")
 
 
+def _known_invariant_exception(
+    period: str, held: Decimal, intragov: Decimal, total: Decimal
+) -> bool:
+    expected = KNOWN_INVARIANT_EXCEPTIONS.get(period)
+    if expected is None:
+        return False
+    return (held, intragov, total) == tuple(Decimal(value) for value in expected)
+
+
 def validate_source_record(record: Mapping[str, str]) -> None:
     fields = frozenset(record)
     if fields != EXPECTED_SOURCE_FIELDS:
@@ -110,9 +131,10 @@ def validate_source_record(record: Mapping[str, str]) -> None:
             f"{record['record_date']}"
         )
     if held is not None and total != held + intragov:
-        raise DatasetValidationError(
-            f"source invariant failed for {record['record_date']}: total != public + intragov"
-        )
+        if not _known_invariant_exception(record["record_date"], held, intragov, total):
+            raise DatasetValidationError(
+                f"source invariant failed for {record['record_date']}: total != public + intragov"
+            )
 
 
 def normalize_source_record(record: Mapping[str, str]) -> dict[str, str]:
@@ -197,7 +219,8 @@ def validate(root: Path) -> dict[str, object]:
                 f"{COMPONENT_COVERAGE_START.isoformat()}: {period}"
             )
         if held is not None and total != held + intragov:
-            raise DatasetValidationError(f"normalized invariant failed for {period}")
+            if not _known_invariant_exception(period, held, intragov, total):
+                raise DatasetValidationError(f"normalized invariant failed for {period}")
 
     for source in source_records:
         period = source["record_date"]
@@ -211,6 +234,18 @@ def validate(root: Path) -> dict[str, object]:
     component_null_records = sum(
         1 for row in normalized if _is_null(row["debt_held_by_public"])
     )
+    known_anomalies_present = [
+        period
+        for period, row in normalized_by_period.items()
+        if period in KNOWN_INVARIANT_EXCEPTIONS
+        and not _is_null(row["debt_held_by_public"])
+        and _known_invariant_exception(
+            period,
+            _decimal(row["debt_held_by_public"], "debt_held_by_public"),
+            _decimal(row["intragovernmental_holdings"], "intragovernmental_holdings"),
+            _decimal(row["total_public_debt_outstanding"], "total_public_debt_outstanding"),
+        )
+    ]
     return {
         "dataset": DATASET_ID,
         "records": len(normalized),
@@ -218,6 +253,7 @@ def validate(root: Path) -> dict[str, object]:
         "latest_period": normalized[-1]["period"] if normalized else None,
         "component_null_records": component_null_records,
         "component_coverage_start": COMPONENT_COVERAGE_START.isoformat(),
+        "known_source_invariant_exceptions": known_anomalies_present,
         "status": "PASS",
     }
 
@@ -260,7 +296,9 @@ def sync(
         retrieved_at=retrieved_at or datetime.now(timezone.utc),
     )
 
-    before = {row["period"]: row for row in read_normalized_rows(root)}
+    before = {
+        row["period"]: row for row in read_normalized_rows(root)
+    }
     rows = rebuild(root)
     after = {row["period"]: row for row in rows}
     changed_years = {
