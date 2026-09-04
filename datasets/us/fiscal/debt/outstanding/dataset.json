@@ -1,0 +1,58 @@
+{
+  "id": "us.fiscal.debt.outstanding",
+  "title": "U.S. Federal Debt Outstanding",
+  "description": "Daily U.S. federal debt outstanding reported by the U.S. Treasury, preserving debt held by the public, intragovernmental holdings, and total public debt outstanding.",
+  "classification": {
+    "geography": "US",
+    "domain": "fiscal",
+    "topic": "sovereign_debt"
+  },
+  "source": {
+    "id": "us_treasury_fiscal_data",
+    "dataset": "debt_to_penny",
+    "endpoint": "v2/accounting/od/debt_to_penny",
+    "url": "https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/",
+    "fields": {
+      "record_date": "Record Date",
+      "debt_held_public_amt": "Debt Held by the Public",
+      "intragov_hold_amt": "Intragovernmental Holdings",
+      "tot_pub_debt_out_amt": "Total Public Debt Outstanding",
+      "src_line_nbr": "Source Line Number"
+    }
+  },
+  "temporal": {
+    "frequency": "business_daily",
+    "period_field": "record_date",
+    "coverage_start": "1993-04-01",
+    "source_update_note": "The source is updated each business day with data from the previous business day."
+  },
+  "dimensions": {},
+  "measures": {
+    "debt_held_by_public": {"source_field": "debt_held_public_amt", "unit": "USD", "type": "decimal"},
+    "intragovernmental_holdings": {"source_field": "intragov_hold_amt", "unit": "USD", "type": "decimal"},
+    "total_public_debt_outstanding": {"source_field": "tot_pub_debt_out_amt", "unit": "USD", "type": "decimal"}
+  },
+  "provenance": {
+    "source_record_locator": ["record_date", "src_line_nbr"],
+    "normalized_hash_field": "source_record_sha256"
+  },
+  "validation": {
+    "source_fields_exact": true,
+    "period_unique": true,
+    "amounts_non_negative": true,
+    "invariants": [
+      "total_public_debt_outstanding = debt_held_by_public + intragovernmental_holdings"
+    ]
+  },
+  "storage": {
+    "raw": "data/raw/us_treasury_fiscal_data/debt_to_penny/sha256-*/",
+    "normalized": "data/normalized/us.fiscal.debt.outstanding/year=YYYY/data.csv",
+    "normalized_format": "csv"
+  },
+  "non_goals": [
+    "market interpretation",
+    "derived indicators",
+    "state assembly",
+    "investment signals"
+  ]
+}

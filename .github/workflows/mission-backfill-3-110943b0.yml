@@ -1,0 +1,45 @@
+name: mission-backfill-3-110943b0
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  backfill:
+    if: github.event.pull_request.head.ref == 'feat/3-treasury-debt-dataset'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Verify source and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\n' "${{ github.event.pull_request.head.sha }}" > /tmp/source.commit
+          PYTHONPATH=src python -m unittest discover -s tests -v
+      - name: Fetch full Treasury history
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./bin/finance-data sync us.fiscal.debt.outstanding --full | tee /tmp/backfill-summary.json
+          ./bin/finance-data validate us.fiscal.debt.outstanding
+          tar -czf /tmp/treasury-debt-backfill.tar.gz data/
+          sha256sum /tmp/treasury-debt-backfill.tar.gz > /tmp/treasury-debt-backfill.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mission-backfill-3-110943b0
+          path: |
+            /tmp/treasury-debt-backfill.tar.gz
+            /tmp/treasury-debt-backfill.tar.gz.sha256
+            /tmp/backfill-summary.json
+            /tmp/source.commit
+          retention-days: 1
+          if-no-files-found: error

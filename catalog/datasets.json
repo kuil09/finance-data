@@ -1,0 +1,11 @@
+{
+  "datasets": [
+    {
+      "id": "us.fiscal.debt.outstanding",
+      "title": "U.S. Federal Debt Outstanding",
+      "manifest": "datasets/us/fiscal/debt/outstanding/dataset.json",
+      "source": "us_treasury_fiscal_data",
+      "frequency": "business_daily"
+    }
+  ]
+}
