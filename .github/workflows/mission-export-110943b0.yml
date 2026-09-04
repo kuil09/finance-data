@@ -1,0 +1,39 @@
+name: mission-export-110943b0
+
+on:
+  push:
+    branches:
+      - mission/export-110943b0
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ee59dade55d7a4dccde6c87096f014f618248ec3
+          fetch-depth: 1
+      - name: Verify source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "ee59dade55d7a4dccde6c87096f014f618248ec3"
+          printf '%s\n' 'ee59dade55d7a4dccde6c87096f014f618248ec3' > source.commit
+      - name: Archive exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz --output=source.tar.gz HEAD
+          sha256sum source.tar.gz > source.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mission-export-110943b0
+          path: |
+            source.tar.gz
+            source.tar.gz.sha256
+            source.commit
+          retention-days: 1
+          if-no-files-found: error
