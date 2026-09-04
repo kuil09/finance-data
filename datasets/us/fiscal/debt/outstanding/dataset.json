@@ -28,12 +28,32 @@
   },
   "dimensions": {},
   "measures": {
-    "debt_held_by_public": {"source_field": "debt_held_public_amt", "unit": "USD", "type": "decimal"},
-    "intragovernmental_holdings": {"source_field": "intragov_hold_amt", "unit": "USD", "type": "decimal"},
-    "total_public_debt_outstanding": {"source_field": "tot_pub_debt_out_amt", "unit": "USD", "type": "decimal"}
+    "debt_held_by_public": {
+      "source_field": "debt_held_public_amt",
+      "unit": "USD",
+      "type": "decimal",
+      "nullable": true,
+      "observed_coverage_start": "2005-03-31"
+    },
+    "intragovernmental_holdings": {
+      "source_field": "intragov_hold_amt",
+      "unit": "USD",
+      "type": "decimal",
+      "nullable": true,
+      "observed_coverage_start": "2005-03-31"
+    },
+    "total_public_debt_outstanding": {
+      "source_field": "tot_pub_debt_out_amt",
+      "unit": "USD",
+      "type": "decimal",
+      "nullable": false
+    }
   },
   "provenance": {
-    "source_record_locator": ["record_date", "src_line_nbr"],
+    "source_record_locator": [
+      "record_date",
+      "src_line_nbr"
+    ],
     "normalized_hash_field": "source_record_sha256"
   },
   "validation": {
@@ -41,18 +61,25 @@
     "period_unique": true,
     "amounts_non_negative": true,
     "invariants": [
-      "total_public_debt_outstanding = debt_held_by_public + intragovernmental_holdings"
+      "When both components are present: total_public_debt_outstanding = debt_held_by_public + intragovernmental_holdings",
+      "debt_held_by_public and intragovernmental_holdings are null together or present together",
+      "component fields are required on and after 2005-03-31"
     ]
   },
   "storage": {
     "raw": "data/raw/us_treasury_fiscal_data/debt_to_penny/sha256-*/",
     "normalized": "data/normalized/us.fiscal.debt.outstanding/year=YYYY/data.csv",
-    "normalized_format": "csv"
+    "normalized_format": "csv",
+    "null_representation": "null"
   },
   "non_goals": [
     "market interpretation",
     "derived indicators",
     "state assembly",
     "investment signals"
+  ],
+  "known_source_limitations": [
+    "The API returns the literal string null for debt_held_public_amt and intragov_hold_amt from 1993-04-01 through 2005-03-30; total public debt outstanding remains available.",
+    "The first observed record with both component amounts populated is 2005-03-31."
   ]
 }
