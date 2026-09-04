@@ -40,7 +40,11 @@ total_public_debt_outstanding
 debt_held_by_public + intragovernmental_holdings
 ```
 
-For the historical total-only range, both component fields must be null together. On and after 2005-03-31 both components are required. The collector also verifies source schema, unique periods, ordering, record counts, decimal validity, and canonical-to-raw provenance.
+For the historical total-only range, both component fields must be null together. On and after 2005-03-31 both components are required.
+
+The live source currently contains two exact exceptions to its own stated sum relationship: 2011-02-01 differs by -$0.03 and 2025-08-04 differs by -$10,000,000,000.00. The repository preserves those source values unchanged and allowlists only those exact records. Any other sum mismatch still fails validation.
+
+The collector also verifies source schema, unique periods, ordering, record counts, decimal validity, and canonical-to-raw provenance.
 
 ## Commands
 
