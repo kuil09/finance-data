@@ -63,6 +63,23 @@ class TreasuryDebtTests(unittest.TestCase):
         with self.assertRaises(DatasetValidationError):
             normalize_source_record(invalid)
 
+    def test_historical_total_only_record_preserves_null_components(self):
+        historical = row("1993-04-01", "null", "null", "4225873987843.44")
+        normalized = normalize_source_record(historical)
+        self.assertEqual(normalized["debt_held_by_public"], "null")
+        self.assertEqual(normalized["intragovernmental_holdings"], "null")
+        self.assertEqual(normalized["total_public_debt_outstanding"], "4225873987843.44")
+
+    def test_missing_component_after_known_coverage_start_fails(self):
+        unexpected = row("2005-03-31", "null", "null", "7776939047670.14")
+        with self.assertRaises(DatasetValidationError):
+            normalize_source_record(unexpected)
+
+    def test_one_sided_component_null_fails(self):
+        invalid = row("1999-01-04", "null", "100.00", "100.00")
+        with self.assertRaises(DatasetValidationError):
+            normalize_source_record(invalid)
+
     def test_sync_is_idempotent_when_source_payload_is_unchanged(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
