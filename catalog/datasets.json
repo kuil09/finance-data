@@ -1,6 +1,13 @@
 {
   "datasets": [
     {
+      "id": "us.energy.petroleum.crude_oil.commercial_stocks",
+      "title": "U.S. Commercial Crude Oil Stocks",
+      "manifest": "datasets/us/energy/petroleum/crude_oil/commercial_stocks/dataset.json",
+      "source": "us_eia",
+      "frequency": "weekly"
+    },
+    {
       "id": "us.fiscal.debt.outstanding",
       "title": "U.S. Federal Debt Outstanding",
       "manifest": "datasets/us/fiscal/debt/outstanding/dataset.json",
