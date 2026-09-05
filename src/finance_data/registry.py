@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from .datasets import treasury_debt
-from .storage import DATASET_ID
+from .datasets import eia_crude_stocks, treasury_debt
+from .storage import DATASET_ID as TREASURY_DATASET_ID
 
 
 @dataclass(frozen=True)
@@ -16,11 +16,16 @@ class DatasetHandler:
 
 
 DATASET_HANDLERS: dict[str, DatasetHandler] = {
-    DATASET_ID: DatasetHandler(
+    TREASURY_DATASET_ID: DatasetHandler(
         sync=treasury_debt.sync,
         rebuild=treasury_debt.rebuild,
         validate=treasury_debt.validate,
-    )
+    ),
+    eia_crude_stocks.DATASET_ID: DatasetHandler(
+        sync=eia_crude_stocks.sync,
+        rebuild=eia_crude_stocks.rebuild,
+        validate=eia_crude_stocks.validate,
+    ),
 }
 SUPPORTED_DATASETS = tuple(sorted(DATASET_HANDLERS))
 

@@ -1,0 +1,38 @@
+{
+  "id": "us_eia",
+  "organization": {
+    "name": "U.S. Energy Information Administration",
+    "url": "https://www.eia.gov/"
+  },
+  "authority": {
+    "level": "primary",
+    "official": true
+  },
+  "access": {
+    "primary": {
+      "type": "official_bulk",
+      "url": "https://www.eia.gov/opendata/bulk/PET.zip",
+      "authentication": "none",
+      "format": "zip containing newline-delimited JSON"
+    },
+    "alternate": {
+      "type": "rest",
+      "base_url": "https://api.eia.gov/v2/",
+      "authentication": "free_api_key",
+      "legacy_series_compatibility_route": "seriesid/{series_id}"
+    }
+  },
+  "data_contract": {
+    "bulk_manifest_access_level": "public",
+    "series_level_copyright_must_be_checked": true,
+    "raw_payloads_are_preserved": true,
+    "retrieval_metadata_is_preserved": true
+  },
+  "rights_gate": {
+    "rule": "Only EIA-owned/reusable series may be mirrored into Git-backed raw and normalized storage.",
+    "selected_series": "PET.WCESTUS1.W",
+    "selected_series_copyright": "None",
+    "selected_series_source": "EIA, U.S. Energy Information Administration",
+    "verified_on": "2026-09-05"
+  }
+}

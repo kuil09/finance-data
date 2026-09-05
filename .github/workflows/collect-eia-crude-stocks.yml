@@ -1,0 +1,96 @@
+name: Collect EIA commercial crude stocks
+
+on:
+  schedule:
+    # WPSR is normally released on Wednesday; run later the same day in UTC.
+    - cron: "0 19 * * 3"
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Run a complete historical backfill"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: collect-eia-crude-stocks
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Test collector
+        run: PYTHONPATH=src python -m unittest discover -s tests -v
+
+      - name: Collect, normalize, and validate
+        id: collect
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.full }}" == "true" ]]; then
+            ./bin/finance-data sync us.energy.petroleum.crude_oil.commercial_stocks --full | tee /tmp/finance-data-summary.json
+          else
+            ./bin/finance-data sync us.energy.petroleum.crude_oil.commercial_stocks | tee /tmp/finance-data-summary.json
+          fi
+          ./bin/finance-data validate us.energy.petroleum.crude_oil.commercial_stocks
+          if [[ -z "$(git status --porcelain -- data/)" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish validated data PR
+        if: steps.collect.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="data/eia-crude-stocks-update"
+          git config user.name "finance-data bot"
+          git config user.email "finance-data-bot@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add data/
+          git commit -m "data: update EIA commercial crude stocks"
+          git push --force origin "$branch"
+
+          pr_number="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
+          if [[ -z "$pr_number" ]]; then
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "data: update EIA commercial crude stocks" \
+              --body "Automated data-only update for \`us.energy.petroleum.crude_oil.commercial_stocks\`. Collection from the official EIA Petroleum bulk package, normalization, rights metadata validation, dataset validation, and unit tests passed before publication."
+            pr_number="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')"
+          fi
+          gh pr merge "$pr_number" --squash --delete-branch
+
+      - name: Open collection failure issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="EIA commercial crude stocks collection failure"
+          existing="$(gh issue list --state open --search "${title} in:title" --json number --jq '.[0].number // empty')"
+          body="The scheduled \`us.energy.petroleum.crude_oil.commercial_stocks\` collection workflow failed. Inspect run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [[ -z "$existing" ]]; then
+            gh issue create --title "$title" --body "$body"
+          else
+            gh issue comment "$existing" --body "$body"
+          fi

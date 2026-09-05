@@ -1,0 +1,63 @@
+{
+  "id": "us.energy.petroleum.crude_oil.commercial_stocks",
+  "title": "U.S. Commercial Crude Oil Stocks",
+  "description": "Weekly U.S. crude oil ending stocks excluding the Strategic Petroleum Reserve, as published by the U.S. Energy Information Administration series PET.WCESTUS1.W.",
+  "classification": {
+    "geography": "US",
+    "domain": "energy",
+    "topic": "petroleum_crude_oil_stocks"
+  },
+  "source": {
+    "id": "us_eia",
+    "dataset": "PET",
+    "series_id": "PET.WCESTUS1.W",
+    "bulk_url": "https://www.eia.gov/opendata/bulk/PET.zip",
+    "series_name": "U.S. Ending Stocks excluding SPR of Crude Oil, Weekly",
+    "source_metadata_verified_on": "2026-09-05",
+    "copyright": "None"
+  },
+  "temporal": {
+    "frequency": "weekly",
+    "period_field": "period",
+    "coverage_start": "1982-08-20",
+    "source_period_format": "YYYYMMDD"
+  },
+  "dimensions": {},
+  "measures": {
+    "stock_thousand_barrels": {
+      "source_field": "value",
+      "unit": "thousand_barrels",
+      "type": "integer",
+      "nullable": false
+    }
+  },
+  "provenance": {
+    "source_record_locator": ["series_id", "period"],
+    "normalized_hash_field": "source_record_sha256"
+  },
+  "validation": {
+    "source_fields_exact": true,
+    "period_unique": true,
+    "values_non_negative": true,
+    "series_id_exact": "PET.WCESTUS1.W",
+    "source_record_count_matches_normalized": true
+  },
+  "storage": {
+    "raw": "data/raw/us_eia/PET.WCESTUS1.W/sha256-*/",
+    "normalized": "data/normalized/us.energy.petroleum.crude_oil.commercial_stocks/year=YYYY/data.csv",
+    "normalized_format": "csv"
+  },
+  "rights": {
+    "bulk_dataset_access_level": "public",
+    "series_copyright": "None",
+    "series_source": "EIA, U.S. Energy Information Administration",
+    "third_party_series_prohibited": true
+  },
+  "non_goals": [
+    "oil price analysis",
+    "inventory change calculations",
+    "stress indicators",
+    "market interpretation",
+    "resampling"
+  ]
+}
