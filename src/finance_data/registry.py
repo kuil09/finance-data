@@ -1,27 +1,44 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from .datasets import treasury_debt
 from .storage import DATASET_ID
 
-SUPPORTED_DATASETS = (DATASET_ID,)
+
+@dataclass(frozen=True)
+class DatasetHandler:
+    sync: Callable[..., object]
+    rebuild: Callable[[Path], object]
+    validate: Callable[[Path], object]
+
+
+DATASET_HANDLERS: dict[str, DatasetHandler] = {
+    DATASET_ID: DatasetHandler(
+        sync=treasury_debt.sync,
+        rebuild=treasury_debt.rebuild,
+        validate=treasury_debt.validate,
+    )
+}
+SUPPORTED_DATASETS = tuple(sorted(DATASET_HANDLERS))
+
+
+def _handler(dataset_id: str) -> DatasetHandler:
+    try:
+        return DATASET_HANDLERS[dataset_id]
+    except KeyError as exc:
+        raise KeyError(f"unsupported dataset: {dataset_id}") from exc
 
 
 def sync_dataset(dataset_id: str, root: Path, **kwargs: Any):
-    if dataset_id != DATASET_ID:
-        raise KeyError(f"unsupported dataset: {dataset_id}")
-    return treasury_debt.sync(root, **kwargs)
+    return _handler(dataset_id).sync(root, **kwargs)
 
 
 def rebuild_dataset(dataset_id: str, root: Path):
-    if dataset_id != DATASET_ID:
-        raise KeyError(f"unsupported dataset: {dataset_id}")
-    return treasury_debt.rebuild(root)
+    return _handler(dataset_id).rebuild(root)
 
 
 def validate_dataset(dataset_id: str, root: Path):
-    if dataset_id != DATASET_ID:
-        raise KeyError(f"unsupported dataset: {dataset_id}")
-    return treasury_debt.validate(root)
+    return _handler(dataset_id).validate(root)
