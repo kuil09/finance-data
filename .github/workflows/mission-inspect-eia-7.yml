@@ -1,0 +1,59 @@
+name: mission-inspect-eia-7
+
+on:
+  push:
+    branches: [feat/7-eia-crude-stocks]
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect official EIA bulk manifest and WCESTUS1
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://api.eia.gov/bulk/manifest.txt -o manifest.json
+          python - <<'PY'
+          import json
+          data=json.load(open('manifest.json'))
+          print('MANIFEST TYPE', type(data).__name__)
+          print('PETROLEUM CANDIDATES')
+          def walk(x):
+              if isinstance(x, dict):
+                  text=' '.join(str(v) for v in x.values())
+                  if 'Petroleum' in text or 'PET.zip' in text or 'PET.' in text:
+                      print(json.dumps(x, sort_keys=True)[:2000])
+                  for v in x.values(): walk(v)
+              elif isinstance(x, list):
+                  for v in x: walk(v)
+          walk(data)
+          PY
+          url=$(python - <<'PY'
+          import json
+          data=json.load(open('manifest.json'))
+          found=[]
+          def walk(x):
+              if isinstance(x, dict):
+                  text=' '.join(str(v) for v in x.values())
+                  if 'Petroleum' in text:
+                      for k,v in x.items():
+                          if isinstance(v,str) and (v.endswith('.zip') or '/bulk/' in v): found.append(v)
+                  for v in x.values(): walk(v)
+              elif isinstance(x,list):
+                  for v in x: walk(v)
+          walk(data)
+          print(found[0] if found else 'https://api.eia.gov/bulk/PET.zip')
+          PY
+          )
+          case "$url" in
+            http*) bulk="$url" ;;
+            *) bulk="https://api.eia.gov/bulk/${url##*/}" ;;
+          esac
+          echo "BULK_URL=$bulk"
+          curl -fsSL "$bulk" -o pet.zip
+          unzip -l pet.zip | head -40 || true
+          echo 'MATCHES'
+          unzip -p pet.zip | grep -F -m 5 -C 2 'WCESTUS1' || true
