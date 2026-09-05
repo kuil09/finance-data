@@ -14,7 +14,7 @@
 
 문제는 데이터가 없다는 것이 아니라 서로 다른 방식으로 존재한다는 것이다.
 
-미국 재무부, EIA, BLS, FRED, ECB, BIS, IMF 같은 기관은 각자 신뢰도 높은 데이터를 제공하지만 다음이 모두 다르다.
+미국 재무부, EIA, BLS, BEA, ECB, BIS, IMF 같은 기관은 각자 신뢰도 높은 데이터를 제공하지만 다음이 모두 다르다.
 
 - API 규격
 - 데이터 구조
@@ -181,7 +181,7 @@ finance query commodity.oil.wti.spot \
   --to 2026-09-01
 ```
 
-원천이 EIA인지 Treasury인지 FRED인지에 따라 소비자의 사용 방법이 달라지지 않는 것을 목표로 한다.
+원천이 EIA인지 Treasury인지에 따라 소비자의 사용 방법이 달라지지 않는 것을 목표로 한다.
 
 ---
 
@@ -298,8 +298,7 @@ U.S. Treasury
 EIA
 BLS
 BEA
-FRED / ALFRED
-Federal Reserve
+Federal Reserve / New York Fed
 ECB
 BIS
 IMF
@@ -307,6 +306,13 @@ OECD
 Bank of Korea
 KOSIS
 ```
+
+후보 Source는 실제 `sources/` 구현과 분리해서 관리한다. 무료 API인지뿐 아니라 **RAW 응답을 저장·아카이브하고 normalized 데이터를 재배포할 수 있는지**를 구현 전에 확인해야 한다.
+
+- 사람용 판정 기준과 조사 결과: [`docs/source-eligibility.md`](docs/source-eligibility.md)
+- 기계 판독 후보 Registry: [`docs/source-candidates.json`](docs/source-candidates.json)
+
+특히 FRED / ALFRED는 discovery와 교차 확인에는 유용하지만, 현재 약관과 이 프로젝트의 Git 기반 RAW/normalized 보존 모델이 충돌하므로 canonical ingestion source로 사용하지 않는다. 가능한 경우 BLS, BEA, Treasury, New York Fed 등 원래 발표기관을 직접 사용한다.
 
 Source 정의에는 최소한 다음 정보가 포함된다.
 
@@ -339,7 +345,6 @@ Adapter는 외부 API와 `finance-data` 사이의 기술적 연결을 담당한�
 ```text
 Treasury Fiscal Data Adapter
 EIA v2 Adapter
-FRED Adapter
 SDMX Adapter
 CSV Adapter
 ```
@@ -551,6 +556,8 @@ finance-data/
 │
 ├── sources/
 │
+├── docs/
+│
 ├── adapters/
 │
 ├── schemas/
@@ -576,7 +583,11 @@ finance-data/
 
 ### `sources/`
 
-외부 데이터 제공기관 및 API 정의.
+구현되어 실제 수집에 사용되는 외부 데이터 제공기관 및 API 정의.
+
+### `docs/`
+
+후보 Source 조사, 이용·재배포 가능성, 구현 전 검토사항 등 아직 production 지원을 의미하지 않는 지식과 정책 문서.
 
 ### `adapters/`
 
@@ -620,8 +631,8 @@ EIA
 BLS
 └── Consumer Price Index
 
-Federal Reserve / FRED
-└── Interest Rates
+Federal Reserve / New York Fed
+└── Interest Rates and Reference Rates
 ```
 
 특정 영역을 빠르게 확장하는 것보다 서로 다른 구조·빈도·dimension을 가진 데이터를 동일한 Dataset 계약 아래에서 처리할 수 있는지를 먼저 검증한다.
