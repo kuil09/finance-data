@@ -1,0 +1,26 @@
+{
+  "access": "official_bulk",
+  "bulk_url": "https://www.eia.gov/opendata/bulk/PET.zip",
+  "response_headers": {
+    "content-length": "55402465",
+    "etag": "\"0bc1d31523cdd1:0\"",
+    "last-modified": "Fri, 04 Sep 2026 09:46:00 GMT"
+  },
+  "series_id": "PET.WCESTUS1.W",
+  "series_metadata": {
+    "copyright": "None",
+    "description": "U.S. Ending Stocks excluding SPR of Crude Oil ",
+    "end": "20260828",
+    "f": "W",
+    "geography": "USA",
+    "iso3166": "USA",
+    "last_updated": "2026-09-02T17:59:48-04:00",
+    "name": "U.S. Ending Stocks excluding SPR of Crude Oil, Weekly",
+    "series_id": "PET.WCESTUS1.W",
+    "source": "EIA, U.S. Energy Information Administration",
+    "start": "19820820",
+    "units": "Thousand Barrels",
+    "unitsshort": "Mbbl"
+  },
+  "start_date": null
+}
