@@ -15,7 +15,7 @@ jobs:
     env:
       BOK_ECOS_API_KEY: ${{ secrets.BOK_ECOS_API_KEY }}
     steps:
-      - name: Inspect ECOS metadata and sample-key limits
+      - name: Quantify ECOS base-rate history and metadata
         shell: bash
         run: |
           set -euo pipefail
@@ -23,31 +23,26 @@ jobs:
           key="${BOK_ECOS_API_KEY:-sample}"
           base='https://ecos.bok.or.kr/api'
 
-          fetch() {
-            local label="$1"; shift
-            local url="$1"
+          for spec in \
+            "item-list|$base/StatisticItemList/$key/json/kr/1/10/722Y001" \
+            "full-count|$base/StatisticSearch/$key/json/kr/1/10/722Y001/D/19990101/20260906/0101000" \
+            "page-two|$base/StatisticSearch/$key/json/kr/11/20/722Y001/D/19990101/20260906/0101000"; do
+            label=${spec%%|*}
+            url=${spec#*|}
             code=$(curl -sS -o "/tmp/${label}.json" -w '%{http_code}' "$url" || true)
-            echo "=== $label HTTP=$code BYTES=$(wc -c < /tmp/${label}.json 2>/dev/null || echo 0) ==="
+            echo "=== $label HTTP=$code ==="
             python - "$label" <<'PY'
           import json,sys
-          path='/tmp/'+sys.argv[1]+'.json'
-          try:
-              p=json.load(open(path))
-          except Exception as e:
-              print('json_error', e)
-              print(open(path, errors='replace').read()[:2000])
-              raise SystemExit
-          print('top_keys', sorted(p) if isinstance(p,dict) else type(p).__name__)
-          print(json.dumps(p, ensure_ascii=False, sort_keys=True)[:12000])
+          label=sys.argv[1]
+          p=json.load(open('/tmp/'+label+'.json'))
+          print(json.dumps(p, ensure_ascii=False, sort_keys=True)[:16000])
+          root=p.get('StatisticItemList') or p.get('StatisticSearch') if isinstance(p,dict) else None
+          if isinstance(root,dict):
+              print('list_total_count=', root.get('list_total_count'))
+              rows=root.get('row') or []
+              print('rows=',len(rows))
+              if rows:
+                  print('first=',json.dumps(rows[0],ensure_ascii=False,sort_keys=True))
+                  print('last=',json.dumps(rows[-1],ensure_ascii=False,sort_keys=True))
           PY
-          }
-
-          fetch item-list "$base/StatisticItemList/$key/json/kr/1/100/722Y001"
-          fetch recent "$base/StatisticSearch/$key/json/kr/1/10/722Y001/D/20250101/20260906/0101000"
-          fetch history-page "$base/StatisticSearch/$key/json/kr/1/100/722Y001/D/19990101/20260906/0101000"
-
-          if [[ "$key" != sample ]]; then
-            fetch history-large "$base/StatisticSearch/$key/json/kr/1/5000/722Y001/D/19990101/20260906/0101000"
-          else
-            fetch sample-over-limit "$base/StatisticSearch/sample/json/kr/1/11/722Y001/D/19990101/20260906/0101000"
-          fi
+          done
