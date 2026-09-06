@@ -32,25 +32,29 @@
       "source_field": "percentPercentile1",
       "unit": "percent",
       "type": "decimal",
-      "nullable": false
+      "nullable": true,
+      "source_missing_token": "NA"
     },
     "percentile_25_percent": {
       "source_field": "percentPercentile25",
       "unit": "percent",
       "type": "decimal",
-      "nullable": false
+      "nullable": true,
+      "source_missing_token": "NA"
     },
     "percentile_75_percent": {
       "source_field": "percentPercentile75",
       "unit": "percent",
       "type": "decimal",
-      "nullable": false
+      "nullable": true,
+      "source_missing_token": "NA"
     },
     "percentile_99_percent": {
       "source_field": "percentPercentile99",
       "unit": "percent",
       "type": "decimal",
-      "nullable": false
+      "nullable": true,
+      "source_missing_token": "NA"
     },
     "volume_billions": {
       "source_field": "volumeInBillions",
@@ -63,7 +67,9 @@
     "revision_indicator_field": "revisionIndicator",
     "footnote_field": "footnoteId",
     "same_day_revisions_are_possible": true,
-    "revision_policy_url": "https://www.newyorkfed.org/markets/reference-rates/additional-information-about-reference-rates"
+    "revision_policy_url": "https://www.newyorkfed.org/markets/reference-rates/additional-information-about-reference-rates",
+    "known_percentile_unavailable_dates": ["2019-05-31", "2021-08-05"],
+    "known_percentile_unavailable_footnote_id": "2"
   },
   "provenance": {
     "source_record_locator": ["effective_date"],
@@ -72,8 +78,10 @@
   "validation": {
     "source_fields_exact": true,
     "period_unique": true,
-    "percentiles_ordered": true,
-    "rate_within_outer_percentiles": true,
+    "percentiles_all_present_or_all_null": true,
+    "unavailable_percentiles_require_footnote": true,
+    "percentiles_ordered_when_present": true,
+    "rate_within_outer_percentiles_when_present": true,
     "volume_positive": true,
     "source_record_count_matches_normalized": true
   },
