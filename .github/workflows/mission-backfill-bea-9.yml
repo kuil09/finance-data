@@ -1,0 +1,55 @@
+name: mission-backfill-bea-9
+
+on:
+  push:
+    branches: [feat/9-bea-gdp]
+    paths:
+      - '.github/workflows/mission-backfill-bea-9.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run tests before source access
+        run: PYTHONPATH=src python -m unittest discover -s tests -v
+      - name: Backfill official BEA GDP series
+        run: |
+          set -euo pipefail
+          ./bin/finance-data sync us.national_accounts.gdp.current_dollars --full | tee /tmp/bea-summary.json
+          ./bin/finance-data validate us.national_accounts.gdp.current_dollars
+          python -m json.tool sources/us_bea/source.json > /dev/null
+          python -m json.tool datasets/us/national_accounts/gdp/current_dollars/dataset.json > /dev/null
+          python -m json.tool catalog/datasets.json > /dev/null
+      - name: Validate all production datasets and deterministic BEA rebuild
+        run: |
+          set -euo pipefail
+          ./bin/finance-data validate us.fiscal.debt.outstanding
+          ./bin/finance-data validate us.energy.petroleum.crude_oil.commercial_stocks
+          ./bin/finance-data validate us.prices.cpi_u.all_items
+          ./bin/finance-data validate us.national_accounts.gdp.current_dollars
+          before=$(find data/normalized/us.national_accounts.gdp.current_dollars -type f -name 'data.csv' -print0 | sort -z | xargs -0 sha256sum | sha256sum)
+          ./bin/finance-data rebuild us.national_accounts.gdp.current_dollars
+          after=$(find data/normalized/us.national_accounts.gdp.current_dollars -type f -name 'data.csv' -print0 | sort -z | xargs -0 sha256sum | sha256sum)
+          test "$before" = "$after"
+      - name: Preserve verified data in task branch
+        run: |
+          set -euo pipefail
+          git config user.name "finance-data bot"
+          git config user.email "finance-data-bot@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No data changes"
+            exit 0
+          fi
+          git commit -m "data: backfill BEA current-dollar GDP"
+          git push origin HEAD:feat/9-bea-gdp
