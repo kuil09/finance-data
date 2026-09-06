@@ -1,0 +1,42 @@
+{
+  "id": "us_bea",
+  "organization": {
+    "name": "U.S. Bureau of Economic Analysis",
+    "url": "https://www.bea.gov/"
+  },
+  "authority": {
+    "level": "primary",
+    "official": true
+  },
+  "access": {
+    "nipa_flat_files": {
+      "type": "bulk_csv_text",
+      "base_url": "https://apps.bea.gov/national/Release/TXT/",
+      "authentication": "none",
+      "files": ["SeriesRegister.txt", "TablesRegister.txt", "nipadataQ.txt"]
+    },
+    "api": {
+      "type": "rest",
+      "url": "https://apps.bea.gov/api/data/",
+      "authentication": "free_registration_key",
+      "credential_environment_variable": "BEA_API_KEY",
+      "rate_limits": {
+        "requests_per_minute": 100,
+        "data_mb_per_minute": 100,
+        "errors_per_minute": 30
+      }
+    }
+  },
+  "data_contract": {
+    "raw_selected_series_records_are_preserved": true,
+    "register_metadata_is_preserved_on_each_raw_record": true,
+    "download_file_hashes_and_http_revision_headers_are_preserved": true,
+    "source_corrections_use_latest_retrieval": true
+  },
+  "rights_gate": {
+    "classification": "public_domain",
+    "note": "BEA states that information on its website is in the public domain unless otherwise stated and may be used or reproduced without permission; citation is appreciated.",
+    "third_party_exceptions_must_be_excluded": true,
+    "verified_on": "2026-09-06"
+  }
+}
