@@ -1,0 +1,21 @@
+{
+  "content_sha256": "5b29723eecb8df5a2d88030dc50827689915a46ec3315584b6d648b0e54a2c46",
+  "pages": 1,
+  "record_count": 10112,
+  "request": {
+    "access": "official_sdmx_rest",
+    "base_url": "https://data-api.ecb.europa.eu/service",
+    "dataflow": "FM",
+    "format": "csvdata",
+    "key": "D.U2.EUR.4F.KR.DFR.LEV",
+    "parameters": {
+      "detail": "full",
+      "format": "csvdata",
+      "startPeriod": "1999-01-01"
+    }
+  },
+  "retrieved_at": "2026-09-06T23:55:53.116968Z",
+  "source": "ecb_data_portal",
+  "source_dataset": "FM.D.U2.EUR.4F.KR.DFR.LEV",
+  "source_total_count": 10112
+}

@@ -1,0 +1,12 @@
+{
+  "access": "official_sdmx_rest",
+  "base_url": "https://data-api.ecb.europa.eu/service",
+  "dataflow": "FM",
+  "format": "csvdata",
+  "key": "D.U2.EUR.4F.KR.DFR.LEV",
+  "parameters": {
+    "detail": "full",
+    "format": "csvdata",
+    "startPeriod": "1999-01-01"
+  }
+}
