@@ -1,0 +1,58 @@
+name: mission-backfill-bls-8
+
+on:
+  push:
+    branches: [feat/8-bls-cpi]
+
+concurrency:
+  group: mission-backfill-bls-8
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      BLS_REGISTRATION_KEY: ${{ secrets.BLS_REGISTRATION_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run tests before source access
+        run: PYTHONPATH=src python -m unittest discover -s tests -v
+      - name: Backfill official BLS CPI series
+        run: |
+          set -euo pipefail
+          ./bin/finance-data sync us.prices.cpi_u.all_items --full | tee /tmp/bls-summary.json
+          ./bin/finance-data validate us.prices.cpi_u.all_items
+          python -m json.tool sources/us_bls/source.json > /dev/null
+          python -m json.tool datasets/us/prices/cpi_u/all_items/dataset.json > /dev/null
+          python -m json.tool catalog/datasets.json > /dev/null
+      - name: Verify all production datasets and deterministic rebuild
+        run: |
+          set -euo pipefail
+          ./bin/finance-data validate us.fiscal.debt.outstanding
+          ./bin/finance-data validate us.energy.petroleum.crude_oil.commercial_stocks
+          ./bin/finance-data validate us.prices.cpi_u.all_items
+          before=$(find data/normalized/us.prices.cpi_u.all_items -type f -name 'data.csv' -print0 | sort -z | xargs -0 sha256sum | sha256sum)
+          ./bin/finance-data rebuild us.prices.cpi_u.all_items
+          after=$(find data/normalized/us.prices.cpi_u.all_items -type f -name 'data.csv' -print0 | sort -z | xargs -0 sha256sum | sha256sum)
+          test "$before" = "$after"
+      - name: Preserve verified data in task branch
+        run: |
+          set -euo pipefail
+          git config user.name "finance-data bot"
+          git config user.email "finance-data-bot@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No data changes"
+            exit 0
+          fi
+          git commit -m "data: backfill BLS CPI-U All Items"
+          git push origin HEAD:feat/8-bls-cpi
