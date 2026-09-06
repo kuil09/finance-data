@@ -43,7 +43,13 @@ jobs:
         run: |
           set -euo pipefail
           ./bin/finance-data sync us.money_market.sofr --full | tee /tmp/nyfed-summary.json
-          ./bin/finance-data validate us.money_market.sofr
+          ./bin/finance-data validate us.money_market.sofr | tee /tmp/nyfed-validation.json
+          python - <<'PY'
+          import json
+          report=json.load(open('/tmp/nyfed-validation.json'))
+          assert report['percentile_unavailable_records'] == 2, report
+          assert report['footnoted_records'] >= 2, report
+          PY
 
       - name: Validate all production datasets and deterministic rebuilds
         run: |
