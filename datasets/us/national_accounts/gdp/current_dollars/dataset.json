@@ -1,0 +1,78 @@
+{
+  "id": "us.national_accounts.gdp.current_dollars",
+  "title": "U.S. Current-Dollar Gross Domestic Product",
+  "description": "Quarterly current-dollar GDP from BEA NIPA Table 1.1.5, line 1, series A191RC.",
+  "classification": {
+    "geography": "US",
+    "domain": "national_accounts",
+    "topic": "gross_domestic_product"
+  },
+  "source": {
+    "id": "us_bea",
+    "dataset": "NIPA",
+    "table_id": "T10105",
+    "table_title": "Table 1.1.5. Gross Domestic Product",
+    "line_number": 1,
+    "series_code": "A191RC",
+    "series_label": "Gross domestic product",
+    "metric_name": "Current Dollars",
+    "calculation_type": "Level",
+    "default_scale": -6,
+    "source_metadata_verified_on": "2026-09-06"
+  },
+  "temporal": {
+    "frequency": "quarterly",
+    "period_field": "period",
+    "coverage_start": "1947-Q1",
+    "seasonal_adjustment": "seasonally_adjusted",
+    "rate_convention": "annual_rate"
+  },
+  "dimensions": {},
+  "measures": {
+    "gdp_millions_current_dollars": {
+      "source_field": "Value",
+      "unit": "millions_of_current_dollars",
+      "type": "decimal",
+      "nullable": false
+    }
+  },
+  "provenance": {
+    "source_record_locator": ["series_code", "period", "table_id", "line_number"],
+    "normalized_hash_field": "source_record_sha256",
+    "retrieval_revision_metadata": ["retrieved_at", "Last-Modified", "ETag", "content_sha256"]
+  },
+  "validation": {
+    "quarterly_periods_only": true,
+    "period_unique": true,
+    "periods_contiguous": true,
+    "values_positive": true,
+    "series_code_exact": "A191RC",
+    "table_id_exact": "T10105",
+    "line_number_exact": 1,
+    "metric_exact": "Current Dollars",
+    "source_record_count_matches_normalized": true
+  },
+  "storage": {
+    "raw": "data/raw/us_bea/NIPA.T10105.A191RC.Q/sha256-*/",
+    "normalized": "data/normalized/us.national_accounts.gdp.current_dollars/year=YYYY/data.csv",
+    "normalized_format": "csv"
+  },
+  "revision_semantics": {
+    "canonical_rule": "latest full BEA retrieval wins for the same quarter",
+    "refresh_strategy": "retrieve complete selected quarterly series on every sync",
+    "reason": "BEA annual and comprehensive NIPA updates can revise long historical ranges",
+    "raw_prior_values_retained": true
+  },
+  "rights": {
+    "classification": "public_domain",
+    "attribution_appreciated": true
+  },
+  "non_goals": [
+    "GDP growth-rate calculation",
+    "real GDP conversion",
+    "deflation",
+    "resampling",
+    "economic interpretation",
+    "forecasting"
+  ]
+}
