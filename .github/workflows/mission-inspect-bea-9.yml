@@ -12,21 +12,21 @@ permissions:
 jobs:
   inspect:
     runs-on: ubuntu-latest
-    env:
-      BEA_API_KEY: ${{ secrets.BEA_API_KEY }}
     steps:
-      - name: Discover official BEA NIPA flat-file endpoint
+      - name: Inspect official BEA NIPA flat files
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -n "${BEA_API_KEY:-}" ]]; then echo 'BEA_API_KEY_PRESENT=true'; else echo 'BEA_API_KEY_PRESENT=false'; fi
-          page='https://apps.bea.gov/iTable/?isuri=1&reqid=19&step=4&categories=flatfiles&nipa_table_list=1'
-          curl -L -fsS "$page" -o /tmp/flat.html
-          echo 'DOWNLOAD-LIKE URLS'
-          grep -Eo 'https?[^"'"'"' <>]+|href="[^"]+"' /tmp/flat.html \
-            | grep -Ei 'csv|zip|flat|download|nipa' \
-            | head -100 || true
-          echo 'HTML CONTEXT'
-          grep -Ein 'csv|zip|download|flat file|T10105' /tmp/flat.html | head -80 || true
-          echo 'NO-KEY API ERROR CONTRACT'
-          curl -sS 'https://apps.bea.gov/api/data/?UserID=&method=GetData&DataSetName=NIPA&TableName=T10105&Frequency=Q&Year=X&ResultFormat=JSON' | head -c 1000
+          base='https://apps.bea.gov/national/Release/TXT'
+          for name in SeriesRegister.txt TablesRegister.txt nipadataQ.txt; do
+            curl -L -fsS "$base/$name" -o "/tmp/$name"
+            echo "=== $name $(wc -c </tmp/$name) bytes ==="
+            head -5 "/tmp/$name"
+          done
+          echo '=== SERIES A191RC ==='
+          grep -E '^%?A191RC,' /tmp/SeriesRegister.txt || true
+          echo '=== TABLE T10105 ==='
+          grep -E '^T10105,' /tmp/TablesRegister.txt || true
+          echo '=== GDP QUARTERLY RECORDS ==='
+          grep -E '^%?A191RC,' /tmp/nipadataQ.txt | head -5 || true
+          grep -E '^%?A191RC,' /tmp/nipadataQ.txt | tail -5 || true
