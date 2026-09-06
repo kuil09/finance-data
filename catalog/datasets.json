@@ -1,6 +1,13 @@
 {
   "datasets": [
     {
+      "id": "kr.monetary_policy.base_rate",
+      "title": "Bank of Korea Base Rate",
+      "manifest": "datasets/kr/monetary_policy/base_rate/dataset.json",
+      "source": "kr_bok_ecos",
+      "frequency": "monthly"
+    },
+    {
       "id": "us.energy.petroleum.crude_oil.commercial_stocks",
       "title": "U.S. Commercial Crude Oil Stocks",
       "manifest": "datasets/us/energy/petroleum/crude_oil/commercial_stocks/dataset.json",
