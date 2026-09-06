@@ -18,15 +18,28 @@ def api_row(
     volume: int = 2000,
     revision: str = "",
     footnote: str | None = None,
+    percentiles_available: bool = True,
 ) -> dict[str, object]:
+    percentiles: dict[str, object]
+    if percentiles_available:
+        percentiles = {
+            "percentPercentile1": rate - 0.06,
+            "percentPercentile25": rate - 0.02,
+            "percentPercentile75": rate + 0.04,
+            "percentPercentile99": rate + 0.08,
+        }
+    else:
+        percentiles = {
+            "percentPercentile1": "NA",
+            "percentPercentile25": "NA",
+            "percentPercentile75": "NA",
+            "percentPercentile99": "NA",
+        }
     return {
         "effectiveDate": period,
         "type": "SOFR",
         "percentRate": rate,
-        "percentPercentile1": rate - 0.06,
-        "percentPercentile25": rate - 0.02,
-        "percentPercentile75": rate + 0.04,
-        "percentPercentile99": rate + 0.08,
+        **percentiles,
         "volumeInBillions": volume,
         "revisionIndicator": revision,
         **({"footnoteId": footnote} if footnote is not None else {}),
@@ -147,6 +160,30 @@ class NYFedSOFRDatasetTests(unittest.TestCase):
             self.assertEqual(by_period["2026-09-03"]["volume_billions"], "2950")
             self.assertEqual(by_period["2026-09-03"]["revision_indicator"], "R")
             self.assertEqual(by_period["2026-09-03"]["footnote_id"], "1")
+
+    def test_unavailable_percentiles_are_preserved_as_null_with_footnote(self):
+        row = api_row(
+            "2021-08-05",
+            0.05,
+            volume=901,
+            footnote="2",
+            percentiles_available=False,
+        )
+        source = FakeAdapter([row]).fetch_sofr(start_date=date(2018, 4, 3)).records[0]
+        normalized = nyfed_sofr.normalize_source_record(source)
+        self.assertEqual(normalized["sofr_percent"], "0.05")
+        self.assertEqual(normalized["percentile_1_percent"], "null")
+        self.assertEqual(normalized["percentile_25_percent"], "null")
+        self.assertEqual(normalized["percentile_75_percent"], "null")
+        self.assertEqual(normalized["percentile_99_percent"], "null")
+        self.assertEqual(normalized["volume_billions"], "901")
+        self.assertEqual(normalized["footnote_id"], "2")
+
+    def test_unavailable_percentiles_without_footnote_are_rejected(self):
+        row = api_row("2021-08-05", 0.05, volume=901, percentiles_available=False)
+        source = FakeAdapter([row]).fetch_sofr(start_date=date(2018, 4, 3)).records[0]
+        with self.assertRaises(nyfed_sofr.DatasetValidationError):
+            nyfed_sofr.validate_source_record(source)
 
     def test_invalid_percentile_order_is_rejected(self):
         record = {
