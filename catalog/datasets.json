@@ -1,6 +1,13 @@
 {
   "datasets": [
     {
+      "id": "ea.monetary_policy.deposit_facility_rate",
+      "title": "ECB Deposit Facility Rate",
+      "manifest": "datasets/ea/monetary_policy/deposit_facility_rate/dataset.json",
+      "source": "ecb_data_portal",
+      "frequency": "daily"
+    },
+    {
       "id": "kr.monetary_policy.base_rate",
       "title": "Bank of Korea Base Rate",
       "manifest": "datasets/kr/monetary_policy/base_rate/dataset.json",
