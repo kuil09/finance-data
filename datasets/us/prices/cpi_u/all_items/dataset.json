@@ -1,0 +1,83 @@
+{
+  "id": "us.prices.cpi_u.all_items",
+  "title": "U.S. CPI-U All Items",
+  "description": "Consumer Price Index for All Urban Consumers (CPI-U), U.S. city average, All items, not seasonally adjusted, as published by the U.S. Bureau of Labor Statistics series CUUR0000SA0.",
+  "classification": {
+    "geography": "US",
+    "domain": "prices",
+    "topic": "consumer_price_index"
+  },
+  "source": {
+    "id": "us_bls",
+    "series_id": "CUUR0000SA0",
+    "series_name": "Consumer Price Index for All Urban Consumers: All Items in U.S. City Average",
+    "seasonal_adjustment": "not_seasonally_adjusted",
+    "api": "BLS Public Data API",
+    "source_metadata_verified_on": "2026-09-06"
+  },
+  "temporal": {
+    "frequency": "monthly",
+    "period_field": "period",
+    "coverage_start": "1913-01",
+    "source_period_fields": ["year", "period"]
+  },
+  "dimensions": {},
+  "measures": {
+    "index_value": {
+      "source_field": "value",
+      "unit": "index_1982_84_100",
+      "type": "decimal",
+      "nullable": true,
+      "null_rule": "BLS unavailable marker '-' is normalized as null while preserving source footnotes"
+    }
+  },
+  "observation_metadata": {
+    "observation_status": "available or unavailable",
+    "footnote_codes": "source footnote codes joined without interpretation",
+    "footnote_text": "source footnote text joined without interpretation",
+    "source_latest": "BLS latest marker from the retrieval in which the canonical source record was observed"
+  },
+  "provenance": {
+    "source_record_locator": ["series_id", "year", "period"],
+    "normalized_hash_field": "source_record_sha256"
+  },
+  "validation": {
+    "regular_months_only": true,
+    "period_unique": true,
+    "numeric_values_non_negative": true,
+    "unavailable_values_require_source_footnote": true,
+    "series_id_exact": "CUUR0000SA0",
+    "source_record_count_matches_normalized": true
+  },
+  "storage": {
+    "raw": "data/raw/us_bls/CUUR0000SA0/sha256-*/",
+    "normalized": "data/normalized/us.prices.cpi_u.all_items/year=YYYY/data.csv",
+    "normalized_format": "csv"
+  },
+  "revision_semantics": {
+    "canonical_rule": "latest retrieval wins for the same source month",
+    "incremental_overlap_years": 2,
+    "raw_prior_values_retained": true
+  },
+  "rights": {
+    "classification": "public_domain",
+    "attribution_requested": true,
+    "third_party_material_excluded": true
+  },
+  "known_source_conditions": [
+    {
+      "period": "2025-10",
+      "value": null,
+      "source_marker": "-",
+      "footnote_code": "X",
+      "note": "Data unavailable due to the 2025 lapse in appropriations"
+    }
+  ],
+  "non_goals": [
+    "inflation-rate calculations",
+    "seasonal adjustment",
+    "resampling",
+    "economic interpretation",
+    "forecasting"
+  ]
+}

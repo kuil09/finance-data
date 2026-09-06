@@ -22,7 +22,18 @@ def build_parser() -> argparse.ArgumentParser:
     sync = subparsers.add_parser("sync", help="collect, preserve, normalize, and validate")
     sync.add_argument("dataset", choices=SUPPORTED_DATASETS)
     sync.add_argument("--full", action="store_true", help="request the complete source history")
-    sync.add_argument("--overlap-days", type=int, default=10)
+    sync.add_argument(
+        "--overlap-days",
+        type=int,
+        default=None,
+        help="override a day-based overlap for datasets that support it",
+    )
+    sync.add_argument(
+        "--overlap-years",
+        type=int,
+        default=None,
+        help="override a year-based overlap for datasets that support it",
+    )
     sync.set_defaults(handler=_cmd_sync)
 
     rebuild = subparsers.add_parser("rebuild", help="rebuild normalized data from preserved raw snapshots")
@@ -45,12 +56,12 @@ def _cmd_datasets(args: argparse.Namespace) -> int:
 
 
 def _cmd_sync(args: argparse.Namespace) -> int:
-    summary = sync_dataset(
-        args.dataset,
-        args.root,
-        full=args.full,
-        overlap_days=args.overlap_days,
-    )
+    kwargs: dict[str, object] = {"full": args.full}
+    if args.overlap_days is not None:
+        kwargs["overlap_days"] = args.overlap_days
+    if args.overlap_years is not None:
+        kwargs["overlap_years"] = args.overlap_years
+    summary = sync_dataset(args.dataset, args.root, **kwargs)
     _print(summary.as_dict())
     return 0
 
@@ -71,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return args.handler(args)
-    except (KeyError, ValueError, RuntimeError) as exc:
+    except (KeyError, TypeError, ValueError, RuntimeError) as exc:
         parser.exit(2, f"error: {exc}\n")
 
 

@@ -1,0 +1,8 @@
+period,index_value,observation_status,footnote_codes,footnote_text,source_latest,source_record_sha256
+2026-01,325.252,available,,,false,eb11062277effa28cf9a9fbd2ab4e3d8f3a5733db36bec888e4da4a6183349d3
+2026-02,326.785,available,,,false,fd1d09ae7d42ef06af59dc9c8f31c6b8479859162ea24ba3f6db84a3fe5be9e3
+2026-03,330.213,available,,,false,163c9f9ee28dad1d49ff4b210f41c16c9ac20de82bfb7e6345535ece14e183a3
+2026-04,333.020,available,,,false,54b43cfaf6829de30d2978e8c24aef8ed7dd1d920facbc50317b4f59834b83d5
+2026-05,335.123,available,,,false,a113ae44f59bec4d6aff85484059b194e24600828a347f09b587ad6546a2fae3
+2026-06,333.952,available,,,false,7aa056c3cefa6de4524c209b9ff85ddccdb98669d85321b3838f2ff4e6d19d0b
+2026-07,333.918,available,,,true,4e0594812dcfbb3212b09aa0423d2c6bb956dd4858dfaccee45da49c4bcd0b09

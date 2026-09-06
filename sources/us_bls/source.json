@@ -1,0 +1,44 @@
+{
+  "id": "us_bls",
+  "organization": {
+    "name": "U.S. Bureau of Labor Statistics",
+    "url": "https://www.bls.gov/"
+  },
+  "authority": {
+    "level": "primary",
+    "official": true
+  },
+  "access": {
+    "unregistered": {
+      "type": "rest",
+      "url": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+      "authentication": "none",
+      "method": "POST",
+      "format": "json",
+      "max_years_per_query": 10,
+      "daily_query_limit": 25
+    },
+    "registered": {
+      "type": "rest",
+      "url": "https://api.bls.gov/publicAPI/v2/timeseries/data/",
+      "authentication": "free_registration_key",
+      "credential_environment_variable": "BLS_REGISTRATION_KEY",
+      "method": "POST",
+      "format": "json"
+    }
+  },
+  "data_contract": {
+    "raw_observations_are_preserved": true,
+    "footnotes_are_preserved": true,
+    "latest_marker_is_preserved": true,
+    "retrieval_metadata_is_preserved": true,
+    "source_corrections_use_latest_retrieval": true
+  },
+  "rights_gate": {
+    "classification": "public_domain",
+    "note": "BLS states that information it publishes is in the public domain except separately copyrighted material such as some photographs or illustrations; source attribution is requested.",
+    "selected_series": "CUUR0000SA0",
+    "selected_series_type": "BLS statistical time series",
+    "verified_on": "2026-09-06"
+  }
+}

@@ -1,0 +1,13 @@
+period,index_value,observation_status,footnote_codes,footnote_text,source_latest,source_record_sha256
+1989-01,121.1,available,,,false,ffbb0c6076d4f6c5427b6d5aa8f4291265a3f19acf71c9d08fd478eabf6b2edb
+1989-02,121.6,available,,,false,326fed72207dccb91efba030080780ad0fc642aac2e122ced6df9bceb785cd98
+1989-03,122.3,available,,,false,aeb9da0e4ddfb1ebf598f531e3b9b411e68ea0b05e135acc8c7573b8160c9951
+1989-04,123.1,available,,,false,307b63db4a1b0ec6b3ef8235c301e1c71484ff3f38097dfe18ff4ab1b9c117ca
+1989-05,123.8,available,,,false,1c06af202f8e45d1da86b303a41150d2ecb396a5c7f2c84e17e98227c68b53c3
+1989-06,124.1,available,,,false,7b432c046d38ed7e7d71cda9c8f78966e35c7582497b4792da3f3eb4f9a3602a
+1989-07,124.4,available,,,false,d67e89ea14faef77a3584f5015195cbb21e75c69e7a91f0cbaad4dcbef0a73c5
+1989-08,124.6,available,,,false,cd2cfe09fdd723e98a4f4cfdca56a70823ae9bb529d04646edd0f3df5368f76b
+1989-09,125.0,available,,,false,6527b522244dce0db6adfd1a68b308abb2af3c5dd8ae7388ebbfc6da1d5ca021
+1989-10,125.6,available,,,false,2948643406453908e6af17099d8eb09e45ddccfa34e20edf55a8ecb467dd3bac
+1989-11,125.9,available,,,false,9055b5233da484bb3e61e9a7a4760e7b85b42d166d5cc09228573a46fea64bf2
+1989-12,126.1,available,,,false,fd34308fa72666d13d1bcf77931f539678716fe5fc57ea8438830392f44da057

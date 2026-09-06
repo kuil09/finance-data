@@ -1,0 +1,184 @@
+{
+  "content_sha256": "0e92ed5fed2cecb2651bf312d4fb8d2529cc030decd74eb9b36775cd06d7f81c",
+  "pages": 12,
+  "record_count": 1363,
+  "request": {
+    "access": "BLS Public Data API",
+    "registered": false,
+    "series_id": "CUUR0000SA0",
+    "windows": [
+      {
+        "end_year": 1922,
+        "endpoint": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+        "filtered_period_codes": [],
+        "period_filter": "M01-M12",
+        "registered": false,
+        "response_metadata": {
+          "message": [],
+          "responseTime": 100,
+          "status": "REQUEST_SUCCEEDED"
+        },
+        "series_id": "CUUR0000SA0",
+        "start_year": 1913
+      },
+      {
+        "end_year": 1932,
+        "endpoint": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+        "filtered_period_codes": [],
+        "period_filter": "M01-M12",
+        "registered": false,
+        "response_metadata": {
+          "message": [],
+          "responseTime": 96,
+          "status": "REQUEST_SUCCEEDED"
+        },
+        "series_id": "CUUR0000SA0",
+        "start_year": 1923
+      },
+      {
+        "end_year": 1942,
+        "endpoint": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+        "filtered_period_codes": [],
+        "period_filter": "M01-M12",
+        "registered": false,
+        "response_metadata": {
+          "message": [],
+          "responseTime": 87,
+          "status": "REQUEST_SUCCEEDED"
+        },
+        "series_id": "CUUR0000SA0",
+        "start_year": 1933
+      },
+      {
+        "end_year": 1952,
+        "endpoint": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+        "filtered_period_codes": [],
+        "period_filter": "M01-M12",
+        "registered": false,
+        "response_metadata": {
+          "message": [],
+          "responseTime": 118,
+          "status": "REQUEST_SUCCEEDED"
+        },
+        "series_id": "CUUR0000SA0",
+        "start_year": 1943
+      },
+      {
+        "end_year": 1962,
+        "endpoint": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+        "filtered_period_codes": [],
+        "period_filter": "M01-M12",
+        "registered": false,
+        "response_metadata": {
+          "message": [],
+          "responseTime": 88,
+          "status": "REQUEST_SUCCEEDED"
+        },
+        "series_id": "CUUR0000SA0",
+        "start_year": 1953
+      },
+      {
+        "end_year": 1972,
+        "endpoint": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+        "filtered_period_codes": [],
+        "period_filter": "M01-M12",
+        "registered": false,
+        "response_metadata": {
+          "message": [],
+          "responseTime": 94,
+          "status": "REQUEST_SUCCEEDED"
+        },
+        "series_id": "CUUR0000SA0",
+        "start_year": 1963
+      },
+      {
+        "end_year": 1982,
+        "endpoint": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+        "filtered_period_codes": [],
+        "period_filter": "M01-M12",
+        "registered": false,
+        "response_metadata": {
+          "message": [],
+          "responseTime": 80,
+          "status": "REQUEST_SUCCEEDED"
+        },
+        "series_id": "CUUR0000SA0",
+        "start_year": 1973
+      },
+      {
+        "end_year": 1992,
+        "endpoint": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+        "filtered_period_codes": [],
+        "period_filter": "M01-M12",
+        "registered": false,
+        "response_metadata": {
+          "message": [],
+          "responseTime": 92,
+          "status": "REQUEST_SUCCEEDED"
+        },
+        "series_id": "CUUR0000SA0",
+        "start_year": 1983
+      },
+      {
+        "end_year": 2002,
+        "endpoint": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+        "filtered_period_codes": [],
+        "period_filter": "M01-M12",
+        "registered": false,
+        "response_metadata": {
+          "message": [],
+          "responseTime": 94,
+          "status": "REQUEST_SUCCEEDED"
+        },
+        "series_id": "CUUR0000SA0",
+        "start_year": 1993
+      },
+      {
+        "end_year": 2012,
+        "endpoint": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+        "filtered_period_codes": [],
+        "period_filter": "M01-M12",
+        "registered": false,
+        "response_metadata": {
+          "message": [],
+          "responseTime": 84,
+          "status": "REQUEST_SUCCEEDED"
+        },
+        "series_id": "CUUR0000SA0",
+        "start_year": 2003
+      },
+      {
+        "end_year": 2022,
+        "endpoint": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+        "filtered_period_codes": [],
+        "period_filter": "M01-M12",
+        "registered": false,
+        "response_metadata": {
+          "message": [],
+          "responseTime": 121,
+          "status": "REQUEST_SUCCEEDED"
+        },
+        "series_id": "CUUR0000SA0",
+        "start_year": 2013
+      },
+      {
+        "end_year": 2026,
+        "endpoint": "https://api.bls.gov/publicAPI/v1/timeseries/data/",
+        "filtered_period_codes": [],
+        "period_filter": "M01-M12",
+        "registered": false,
+        "response_metadata": {
+          "message": [],
+          "responseTime": 89,
+          "status": "REQUEST_SUCCEEDED"
+        },
+        "series_id": "CUUR0000SA0",
+        "start_year": 2023
+      }
+    ]
+  },
+  "retrieved_at": "2026-09-06T01:20:07.745535Z",
+  "source": "us_bls",
+  "source_dataset": "CUUR0000SA0",
+  "source_total_count": 1363
+}

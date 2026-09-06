@@ -13,6 +13,13 @@
       "manifest": "datasets/us/fiscal/debt/outstanding/dataset.json",
       "source": "us_treasury_fiscal_data",
       "frequency": "business_daily"
+    },
+    {
+      "id": "us.prices.cpi_u.all_items",
+      "title": "U.S. CPI-U All Items",
+      "manifest": "datasets/us/prices/cpi_u/all_items/dataset.json",
+      "source": "us_bls",
+      "frequency": "monthly"
     }
   ]
 }
