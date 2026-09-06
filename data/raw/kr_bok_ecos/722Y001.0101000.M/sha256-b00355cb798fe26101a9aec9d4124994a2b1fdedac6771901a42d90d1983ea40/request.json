@@ -1,0 +1,11 @@
+{
+  "access": "official_rest",
+  "cycle": "M",
+  "end_time": "202609",
+  "endpoint": "https://ecos.bok.or.kr/api/StatisticSearch/...",
+  "item_code": "0101000",
+  "page_size": 10,
+  "registered": false,
+  "start_time": "199905",
+  "stat_code": "722Y001"
+}
