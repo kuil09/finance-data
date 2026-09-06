@@ -1,0 +1,39 @@
+{
+  "id": "us_nyfed",
+  "organization": {
+    "name": "Federal Reserve Bank of New York",
+    "url": "https://www.newyorkfed.org/"
+  },
+  "authority": {
+    "level": "primary",
+    "official": true
+  },
+  "access": {
+    "primary": {
+      "type": "rest",
+      "base_url": "https://markets.newyorkfed.org/api/",
+      "documentation": "https://markets.newyorkfed.org/static/docs/markets-api.html",
+      "authentication": "none",
+      "format": "json"
+    }
+  },
+  "data_contract": {
+    "selected_endpoint": "rates/secured/sofr/search.json",
+    "selected_type": "rate,volume",
+    "raw_payloads_are_preserved": true,
+    "retrieval_metadata_is_preserved": true,
+    "revision_indicator_is_preserved": true,
+    "source_corrections_are_applied_by_effective_date": true
+  },
+  "rights_gate": {
+    "terms_url": "https://www.newyorkfed.org/privacy/termsofuse",
+    "storage_permitted": true,
+    "distribution_permitted": true,
+    "business_use_permitted": true,
+    "reference_rate_notice_required": true,
+    "required_attribution": "Federal Reserve Bank of New York",
+    "notice_summary": "SOFR data remains subject to the New York Fed Terms of Use. finance-data republishes the data independently; the New York Fed does not endorse this republication and accepts no liability for its use.",
+    "dtcc_input_disclaimer": "The New York Fed states that SOFR is calculated using data supplied under a license from DTCC Solutions LLC and disclaims liability for the underlying material.",
+    "verified_on": "2026-09-06"
+  }
+}
