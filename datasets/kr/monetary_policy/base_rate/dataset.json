@@ -1,0 +1,84 @@
+{
+  "id": "kr.monetary_policy.base_rate",
+  "title": "Bank of Korea Base Rate",
+  "description": "Monthly source-published Bank of Korea base rate from the ECOS Open API.",
+  "classification": {
+    "geography": "KR",
+    "domain": "monetary_policy",
+    "topic": "base_rate"
+  },
+  "source": {
+    "id": "kr_bok_ecos",
+    "service": "StatisticSearch",
+    "stat_code": "722Y001",
+    "stat_name": "1.3.1. 한국은행 기준금리 및 여수신금리",
+    "item_code": "0101000",
+    "item_name": "한국은행 기준금리",
+    "cycle": "M"
+  },
+  "temporal": {
+    "frequency": "monthly",
+    "period_field": "period",
+    "source_period_field": "TIME",
+    "coverage_start": "1999-05",
+    "source_cycle": "M",
+    "resampled": false
+  },
+  "dimensions": {},
+  "measures": {
+    "base_rate_percent": {
+      "source_field": "DATA_VALUE",
+      "unit": "annual_percent",
+      "source_unit": "연%",
+      "type": "decimal",
+      "nullable": false
+    }
+  },
+  "provenance": {
+    "source_record_locator": ["time"],
+    "normalized_hash_field": "source_record_sha256",
+    "raw_source_fields_preserved": [
+      "time",
+      "stat_code",
+      "stat_name",
+      "item_code",
+      "item_name",
+      "unit_name",
+      "data_value"
+    ]
+  },
+  "revision_semantics": {
+    "source_corrections_replace_canonical_period": true,
+    "raw_snapshots_preserve_prior_retrievals": true,
+    "incremental_overlap_months": 24
+  },
+  "validation": {
+    "source_fields_exact": true,
+    "source_identity_exact": true,
+    "period_unique": true,
+    "monthly_history_contiguous": true,
+    "value_bounds_percent": [0, 100],
+    "source_record_count_matches_normalized": true
+  },
+  "storage": {
+    "raw": "data/raw/kr_bok_ecos/722Y001.0101000.M/sha256-*/",
+    "normalized": "data/normalized/kr.monetary_policy.base_rate/year=YYYY/data.csv",
+    "normalized_format": "csv"
+  },
+  "rights": {
+    "public_data_portal_evidence": "https://www.data.go.kr/data/15059634/openapi.do",
+    "fee": "free",
+    "reuse_scope": "unrestricted",
+    "storage_permitted": true,
+    "redistribution_permitted": true,
+    "selected_series_is_bank_of_korea_originated": true
+  },
+  "non_goals": [
+    "daily-rate reconstruction",
+    "rate-change event derivation",
+    "resampling from another ECOS cycle",
+    "policy interpretation",
+    "forward-rate construction",
+    "interest-rate forecasting"
+  ]
+}
