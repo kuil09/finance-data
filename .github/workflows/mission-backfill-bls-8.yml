@@ -1,8 +1,7 @@
 name: mission-backfill-bls-8
 
 on:
-  push:
-    branches: [feat/8-bls-cpi]
+  workflow_dispatch:
 
 concurrency:
   group: mission-backfill-bls-8
@@ -13,7 +12,6 @@ permissions:
 
 jobs:
   backfill:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     env:
       BLS_REGISTRATION_KEY: ${{ secrets.BLS_REGISTRATION_KEY }}
