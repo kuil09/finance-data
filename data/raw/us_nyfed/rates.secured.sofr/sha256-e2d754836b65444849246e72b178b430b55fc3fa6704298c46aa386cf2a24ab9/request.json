@@ -1,0 +1,8 @@
+{
+  "access": "official_rest",
+  "end_date": "2026-09-06",
+  "endpoint": "https://markets.newyorkfed.org/api/rates/secured/sofr/search.json",
+  "start_date": "2018-04-03",
+  "type": "rate,volume",
+  "url": "https://markets.newyorkfed.org/api/rates/secured/sofr/search.json?startDate=2018-04-03&endDate=2026-09-06&type=rate%2Cvolume"
+}

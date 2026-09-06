@@ -1,0 +1,108 @@
+{
+  "id": "us.money_market.sofr",
+  "title": "Secured Overnight Financing Rate (SOFR)",
+  "description": "Daily Secured Overnight Financing Rate, distribution percentiles, and transaction volume as published by the Federal Reserve Bank of New York.",
+  "classification": {
+    "geography": "US",
+    "domain": "money_market",
+    "topic": "secured_overnight_financing_rate"
+  },
+  "source": {
+    "id": "us_nyfed",
+    "endpoint": "rates/secured/sofr/search.json",
+    "rate_type": "SOFR",
+    "history_start": "2018-04-03",
+    "api_query_type": "rate,volume"
+  },
+  "temporal": {
+    "frequency": "business_daily",
+    "period_field": "period",
+    "coverage_start": "2018-04-03",
+    "source_period_field": "effectiveDate"
+  },
+  "dimensions": {},
+  "measures": {
+    "sofr_percent": {
+      "source_field": "percentRate",
+      "unit": "percent",
+      "type": "decimal",
+      "nullable": false
+    },
+    "percentile_1_percent": {
+      "source_field": "percentPercentile1",
+      "unit": "percent",
+      "type": "decimal",
+      "nullable": true,
+      "source_missing_token": "NA"
+    },
+    "percentile_25_percent": {
+      "source_field": "percentPercentile25",
+      "unit": "percent",
+      "type": "decimal",
+      "nullable": true,
+      "source_missing_token": "NA"
+    },
+    "percentile_75_percent": {
+      "source_field": "percentPercentile75",
+      "unit": "percent",
+      "type": "decimal",
+      "nullable": true,
+      "source_missing_token": "NA"
+    },
+    "percentile_99_percent": {
+      "source_field": "percentPercentile99",
+      "unit": "percent",
+      "type": "decimal",
+      "nullable": true,
+      "source_missing_token": "NA"
+    },
+    "volume_billions": {
+      "source_field": "volumeInBillions",
+      "unit": "billions_usd",
+      "type": "decimal",
+      "nullable": false
+    }
+  },
+  "source_metadata": {
+    "revision_indicator_field": "revisionIndicator",
+    "footnote_field": "footnoteId",
+    "same_day_revisions_are_possible": true,
+    "revision_policy_url": "https://www.newyorkfed.org/markets/reference-rates/additional-information-about-reference-rates",
+    "known_percentile_unavailable_dates": ["2019-05-31", "2021-08-05"],
+    "known_percentile_unavailable_footnote_id": "2"
+  },
+  "provenance": {
+    "source_record_locator": ["effective_date"],
+    "normalized_hash_field": "source_record_sha256"
+  },
+  "validation": {
+    "source_fields_exact": true,
+    "period_unique": true,
+    "percentiles_all_present_or_all_null": true,
+    "unavailable_percentiles_require_footnote": true,
+    "percentiles_ordered_when_present": true,
+    "rate_within_outer_percentiles_when_present": true,
+    "volume_positive": true,
+    "source_record_count_matches_normalized": true
+  },
+  "storage": {
+    "raw": "data/raw/us_nyfed/rates.secured.sofr/sha256-*/",
+    "normalized": "data/normalized/us.money_market.sofr/year=YYYY/data.csv",
+    "normalized_format": "csv"
+  },
+  "rights": {
+    "terms_url": "https://www.newyorkfed.org/privacy/termsofuse",
+    "storage_permitted": true,
+    "distribution_permitted": true,
+    "reference_rate_notice_required": true,
+    "notice_file": "datasets/us/money_market/sofr/NOTICE.md",
+    "third_party_input_note": "SOFR is calculated by the New York Fed using data supplied under a DTCC Solutions LLC license; see the New York Fed Terms of Use for the applicable disclaimer."
+  },
+  "non_goals": [
+    "SOFR spread calculations",
+    "policy interpretation",
+    "forward rate construction",
+    "interest-rate forecasting",
+    "resampling"
+  ]
+}

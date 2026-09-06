@@ -15,6 +15,13 @@
       "frequency": "business_daily"
     },
     {
+      "id": "us.money_market.sofr",
+      "title": "Secured Overnight Financing Rate (SOFR)",
+      "manifest": "datasets/us/money_market/sofr/dataset.json",
+      "source": "us_nyfed",
+      "frequency": "business_daily"
+    },
+    {
       "id": "us.national_accounts.gdp.current_dollars",
       "title": "U.S. Current-Dollar Gross Domestic Product",
       "manifest": "datasets/us/national_accounts/gdp/current_dollars/dataset.json",

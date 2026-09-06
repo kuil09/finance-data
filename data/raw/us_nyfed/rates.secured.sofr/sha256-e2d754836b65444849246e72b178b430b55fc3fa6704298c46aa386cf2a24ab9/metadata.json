@@ -1,0 +1,9 @@
+{
+  "content_sha256": "e2d754836b65444849246e72b178b430b55fc3fa6704298c46aa386cf2a24ab9",
+  "pages": 1,
+  "record_count": 2104,
+  "retrieved_at": "2026-09-06T11:03:40.033317Z",
+  "source": "us_nyfed",
+  "source_dataset": "rates.secured.sofr",
+  "source_total_count": 2104
+}
