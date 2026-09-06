@@ -8,6 +8,7 @@ from .datasets import (
     bea_gdp,
     bls_cpi,
     bok_base_rate,
+    ecb_deposit_rate,
     eia_crude_stocks,
     nyfed_sofr,
     treasury_debt,
@@ -52,6 +53,11 @@ DATASET_HANDLERS: dict[str, DatasetHandler] = {
         sync=bok_base_rate.sync,
         rebuild=bok_base_rate.rebuild,
         validate=bok_base_rate.validate,
+    ),
+    ecb_deposit_rate.DATASET_ID: DatasetHandler(
+        sync=ecb_deposit_rate.sync,
+        rebuild=ecb_deposit_rate.rebuild,
+        validate=ecb_deposit_rate.validate,
     ),
 }
 SUPPORTED_DATASETS = tuple(sorted(DATASET_HANDLERS))
