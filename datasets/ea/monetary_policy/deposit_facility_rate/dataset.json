@@ -1,0 +1,87 @@
+{
+  "id": "ea.monetary_policy.deposit_facility_rate",
+  "title": "ECB Deposit Facility Rate",
+  "description": "Daily ECB deposit facility rate level for the euro area, preserving the source SDMX dimensions and observation metadata.",
+  "classification": {
+    "geography": "EA",
+    "domain": "monetary_policy",
+    "topic": "deposit_facility_rate"
+  },
+  "source": {
+    "id": "ecb_data_portal",
+    "dataflow": "FM",
+    "key": "D.U2.EUR.4F.KR.DFR.LEV",
+    "full_key": "FM.D.U2.EUR.4F.KR.DFR.LEV"
+  },
+  "temporal": {
+    "frequency": "daily",
+    "calendar": "calendar_daily",
+    "period_field": "period",
+    "source_period_field": "TIME_PERIOD",
+    "coverage_start": "1999-01-01",
+    "resampled": false
+  },
+  "dimensions": {
+    "FREQ": "D",
+    "REF_AREA": "U2",
+    "CURRENCY": "EUR",
+    "PROVIDER_FM": "4F",
+    "INSTRUMENT_FM": "KR",
+    "PROVIDER_FM_ID": "DFR",
+    "DATA_TYPE_FM": "LEV"
+  },
+  "measures": {
+    "deposit_facility_rate_percent": {
+      "source_field": "OBS_VALUE",
+      "source_unit": "PCPA",
+      "unit": "percent_per_annum",
+      "type": "decimal",
+      "nullable": false
+    }
+  },
+  "source_metadata": {
+    "observation_status_field": "OBS_STATUS",
+    "observation_confidentiality_field": "OBS_CONF",
+    "pre_break_field": "OBS_PRE_BREAK",
+    "time_format": "P1D",
+    "unit_multiplier": "0"
+  },
+  "revision_semantics": {
+    "full_series_refetched_each_sync": true,
+    "source_corrections_replace_canonical_period": true,
+    "raw_snapshots_preserve_prior_retrievals": true
+  },
+  "provenance": {
+    "source_record_locator": ["TIME_PERIOD"],
+    "normalized_hash_field": "source_record_sha256",
+    "raw_sdmx_row_preserved": true
+  },
+  "validation": {
+    "source_dimensions_exact": true,
+    "period_unique": true,
+    "calendar_daily_history_contiguous": true,
+    "source_record_count_matches_normalized": true,
+    "value_bounds_percent": [-10, 100]
+  },
+  "storage": {
+    "raw": "data/raw/ecb_data_portal/FM.D.U2.EUR.4F.KR.DFR.LEV/sha256-*/",
+    "normalized": "data/normalized/ea.monetary_policy.deposit_facility_rate/year=YYYY/data.csv",
+    "normalized_format": "csv"
+  },
+  "rights": {
+    "reuse_policy_url": "https://www.ecb.europa.eu/home/what-we-do/services/reuse-ecb-data/html/index.en.html",
+    "attribution_required": true,
+    "statistics_and_metadata_must_not_be_modified": true,
+    "third_party_data_excluded_without_separate_permission": true,
+    "selected_series_is_ecb_originated": true,
+    "storage_permitted": true,
+    "redistribution_permitted": true
+  },
+  "non_goals": [
+    "policy stance inference",
+    "rate spread calculations",
+    "resampling",
+    "forward-rate construction",
+    "interest-rate forecasting"
+  ]
+}
