@@ -1,0 +1,79 @@
+name: mission-backfill-nyfed-10
+
+on:
+  push:
+    branches: [feat/10-nyfed-sofr]
+    paths:
+      - '.github/workflows/mission-backfill-nyfed-10.yml'
+
+concurrency:
+  group: mission-backfill-nyfed-10
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify source identity
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Run tests and compile checks
+        run: |
+          PYTHONPATH=src python -m unittest discover -s tests -v
+          python -m compileall -q src tests
+
+      - name: Validate manifests before source access
+        run: |
+          python -m json.tool sources/us_nyfed/source.json > /dev/null
+          python -m json.tool datasets/us/money_market/sofr/dataset.json > /dev/null
+          python -m json.tool catalog/datasets.json > /dev/null
+
+      - name: Backfill official New York Fed SOFR history
+        run: |
+          set -euo pipefail
+          ./bin/finance-data sync us.money_market.sofr --full | tee /tmp/nyfed-summary.json
+          ./bin/finance-data validate us.money_market.sofr
+
+      - name: Validate all production datasets and deterministic rebuilds
+        run: |
+          set -euo pipefail
+          datasets=(
+            us.fiscal.debt.outstanding
+            us.energy.petroleum.crude_oil.commercial_stocks
+            us.prices.cpi_u.all_items
+            us.national_accounts.gdp.current_dollars
+            us.money_market.sofr
+          )
+          for dataset in "${datasets[@]}"; do
+            ./bin/finance-data validate "$dataset"
+          done
+          before=$(find data/normalized -type f -name 'data.csv' -print0 | sort -z | xargs -0 sha256sum | sha256sum)
+          for dataset in "${datasets[@]}"; do
+            ./bin/finance-data rebuild "$dataset"
+          done
+          after=$(find data/normalized -type f -name 'data.csv' -print0 | sort -z | xargs -0 sha256sum | sha256sum)
+          test "$before" = "$after"
+
+      - name: Preserve verified data in task branch
+        run: |
+          set -euo pipefail
+          git config user.name "finance-data bot"
+          git config user.email "finance-data-bot@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No data changes"
+            exit 0
+          fi
+          git commit -m "data: backfill New York Fed SOFR"
+          git push origin HEAD:feat/10-nyfed-sofr
