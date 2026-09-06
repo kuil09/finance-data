@@ -1,0 +1,48 @@
+name: mission-verify-nyfed-10
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run tests and compile
+        run: |
+          PYTHONPATH=src python -m unittest discover -s tests -v
+          python -m compileall -q src tests
+
+      - name: Validate source, dataset, catalog, and notice
+        run: |
+          python -m json.tool sources/us_nyfed/source.json > /dev/null
+          python -m json.tool datasets/us/money_market/sofr/dataset.json > /dev/null
+          python -m json.tool catalog/datasets.json > /dev/null
+          test -s datasets/us/money_market/sofr/NOTICE.md
+
+      - name: Validate all production datasets
+        run: |
+          ./bin/finance-data validate us.fiscal.debt.outstanding
+          ./bin/finance-data validate us.energy.petroleum.crude_oil.commercial_stocks
+          ./bin/finance-data validate us.prices.cpi_u.all_items
+          ./bin/finance-data validate us.national_accounts.gdp.current_dollars
+          ./bin/finance-data validate us.money_market.sofr
+
+      - name: Verify offline rebuilds produce no canonical diff
+        run: |
+          set -euo pipefail
+          ./bin/finance-data rebuild us.fiscal.debt.outstanding
+          ./bin/finance-data rebuild us.energy.petroleum.crude_oil.commercial_stocks
+          ./bin/finance-data rebuild us.prices.cpi_u.all_items
+          ./bin/finance-data rebuild us.national_accounts.gdp.current_dollars
+          ./bin/finance-data rebuild us.money_market.sofr
+          git diff --exit-code -- data/normalized/
