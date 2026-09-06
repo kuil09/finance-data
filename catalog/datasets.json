@@ -15,6 +15,13 @@
       "frequency": "business_daily"
     },
     {
+      "id": "us.national_accounts.gdp.current_dollars",
+      "title": "U.S. Current-Dollar Gross Domestic Product",
+      "manifest": "datasets/us/national_accounts/gdp/current_dollars/dataset.json",
+      "source": "us_bea",
+      "frequency": "quarterly"
+    },
+    {
       "id": "us.prices.cpi_u.all_items",
       "title": "U.S. CPI-U All Items",
       "manifest": "datasets/us/prices/cpi_u/all_items/dataset.json",
