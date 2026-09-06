@@ -29,6 +29,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="override a day-based overlap for datasets that support it",
     )
     sync.add_argument(
+        "--overlap-months",
+        type=int,
+        default=None,
+        help="override a month-based overlap for datasets that support it",
+    )
+    sync.add_argument(
         "--overlap-years",
         type=int,
         default=None,
@@ -59,6 +65,8 @@ def _cmd_sync(args: argparse.Namespace) -> int:
     kwargs: dict[str, object] = {"full": args.full}
     if args.overlap_days is not None:
         kwargs["overlap_days"] = args.overlap_days
+    if args.overlap_months is not None:
+        kwargs["overlap_months"] = args.overlap_months
     if args.overlap_years is not None:
         kwargs["overlap_years"] = args.overlap_years
     summary = sync_dataset(args.dataset, args.root, **kwargs)
