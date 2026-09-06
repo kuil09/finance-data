@@ -1,0 +1,41 @@
+{
+  "id": "kr_bok_ecos",
+  "organization": {
+    "name": "Bank of Korea",
+    "name_ko": "한국은행",
+    "url": "https://www.bok.or.kr/"
+  },
+  "authority": {
+    "level": "primary",
+    "official": true
+  },
+  "access": {
+    "primary": {
+      "type": "rest",
+      "base_url": "https://ecos.bok.or.kr/api/",
+      "documentation": "https://ecos.bok.or.kr/api/#/",
+      "authentication": "free_api_key_or_public_sample",
+      "registered_key_env": "BOK_ECOS_API_KEY",
+      "sample_page_limit": 10,
+      "format": "json+xml"
+    }
+  },
+  "data_contract": {
+    "selected_stat_code": "722Y001",
+    "selected_item_code": "0101000",
+    "selected_cycle": "M",
+    "raw_payloads_are_preserved": true,
+    "retrieval_metadata_is_preserved": true,
+    "source_corrections_are_applied_by_period": true,
+    "registered_credentials_are_never_persisted": true
+  },
+  "rights_gate": {
+    "public_data_portal_evidence": "https://www.data.go.kr/data/15059634/openapi.do",
+    "fee": "free",
+    "reuse_scope": "unrestricted",
+    "storage_permitted": true,
+    "redistribution_permitted": true,
+    "selected_series_is_bank_of_korea_originated": true,
+    "verified_on": "2026-09-06"
+  }
+}
