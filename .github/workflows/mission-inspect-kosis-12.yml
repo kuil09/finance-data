@@ -1,0 +1,45 @@
+name: mission-inspect-kosis-12
+
+on:
+  push:
+    branches: [feat/12-kosis-cpi]
+    paths:
+      - '.github/workflows/mission-inspect-kosis-12.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    env:
+      KOSIS_API_KEY: ${{ secrets.KOSIS_API_KEY }}
+    steps:
+      - name: Inspect current KOSIS CPI identifiers and credential availability
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${KOSIS_API_KEY:-}" ]]; then
+            echo 'KOSIS_API_KEY_PRESENT=true'
+          else
+            echo 'KOSIS_API_KEY_PRESENT=false'
+          fi
+
+          urls=(
+            'https://kosis.kr/visual/nsportalStats/detailContents.do?listId=F&statJipyoId=3698&vStatJipyoId=4991'
+            'https://kosis.kr/serviceInfo/newContrainDataDetail.do?boardIdx=1964001&boardOrgId=101'
+            'https://kosis.kr/serviceInfo/openAPIGuide.do'
+          )
+          i=0
+          for url in "${urls[@]}"; do
+            i=$((i+1))
+            curl -L -fsS -A 'finance-data/0.1 (+https://github.com/kuil09/finance-data)' "$url" -o "/tmp/kosis-$i.html"
+            echo "=== PAGE $i URL=$url BYTES=$(wc -c < /tmp/kosis-$i.html) ==="
+            grep -Ein 'DT_[A-Za-z0-9_]+|tblId|orgId|itmId|objL1|objL2|statHtml|소비자물가지수|지출목적별' "/tmp/kosis-$i.html" | head -250 || true
+          done
+
+          echo '=== UNIQUE DT IDS ACROSS PAGES ==='
+          grep -Eho 'DT_[A-Za-z0-9_]+' /tmp/kosis-*.html | sort -u || true
+
+          echo '=== SCRIPT SOURCES FROM CPI INDICATOR PAGE ==='
+          grep -Eo '<script[^>]+src="[^"]+' /tmp/kosis-1.html | sed 's/.*src="//' | head -100 || true
