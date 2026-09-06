@@ -12,38 +12,21 @@ permissions:
 jobs:
   inspect:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
     steps:
-      - name: Resolve Public Data Portal dynamic search endpoint
+      - name: Check configured Public Data Portal credential presence
+        env:
+          KCS_SERVICE_KEY: ${{ secrets.KCS_SERVICE_KEY }}
+          DATA_GO_KR_SERVICE_KEY: ${{ secrets.DATA_GO_KR_SERVICE_KEY }}
         shell: bash
         run: |
           set -euo pipefail
-          ua='finance-data/0.1 (+https://github.com/kuil09/finance-data)'
-          search='https://www.data.go.kr/tcs/dss/selectDataSetList.do?keyword=%EA%B4%80%EC%84%B8%EC%B2%AD_%EC%9B%94%EB%B3%84_%ED%92%88%EB%AA%A9%EB%B3%84_%EA%B5%AD%EA%B0%80%EB%B3%84%20%EC%88%98%EC%B6%9C%EC%9E%85%EC%8B%A4%EC%A0%81'
-          curl --connect-timeout 5 --max-time 20 -L -fsS -A "$ua" "$search" -o /tmp/search.html
-
-          python - <<'PY'
-          import html,re
-          from pathlib import Path
-          text=html.unescape(Path('/tmp/search.html').read_text(encoding='utf-8',errors='replace'))
-          patterns=[
-              r'["\']([^"\']+\.do)["\']',
-              r'url\s*[:=]\s*["\']([^"\']+)["\']',
-          ]
-          endpoints=[]
-          for pat in patterns:
-              for m in re.finditer(pat,text,re.I):
-                  u=m.group(1)
-                  if any(k in u.lower() for k in ('dataset','dss','search','filedata','ajax','list')) and u not in endpoints:
-                      endpoints.append(u)
-          print('ENDPOINT_CANDIDATES=')
-          for u in endpoints[:150]: print(u)
-
-          for keyword in ('url += "/fileData.do"','publicDataPk','fn_search','ajax','selectDataSetList'):
-              print('=== CONTEXT',keyword,'===')
-              for m in list(re.finditer(re.escape(keyword),text,re.I))[:12]:
-                  print(' '.join(text[max(0,m.start()-1200):m.end()+2200].split())[:5000])
-          PY
-
-          echo '=== POST/AJAX FORMS ==='
-          grep -Ein '\$\.ajax|ajax\(|fetch\(|XMLHttpRequest|selectDataSet.*\.do|/tcs/dss/.*\.do' /tmp/search.html | head -250 || true
+          if [[ -n "${KCS_SERVICE_KEY:-}" ]]; then
+            echo 'KCS_SERVICE_KEY_PRESENT=true'
+          else
+            echo 'KCS_SERVICE_KEY_PRESENT=false'
+          fi
+          if [[ -n "${DATA_GO_KR_SERVICE_KEY:-}" ]]; then
+            echo 'DATA_GO_KR_SERVICE_KEY_PRESENT=true'
+          else
+            echo 'DATA_GO_KR_SERVICE_KEY_PRESENT=false'
+          fi
