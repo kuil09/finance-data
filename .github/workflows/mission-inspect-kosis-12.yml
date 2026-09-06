@@ -12,6 +12,7 @@ permissions:
 jobs:
   inspect:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     env:
       KOSIS_API_KEY: ${{ secrets.KOSIS_API_KEY }}
     steps:
@@ -19,27 +20,32 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -n "${KOSIS_API_KEY:-}" ]]; then
-            echo 'KOSIS_API_KEY_PRESENT=true'
-          else
-            echo 'KOSIS_API_KEY_PRESENT=false'
-          fi
+          if [[ -n "${KOSIS_API_KEY:-}" ]]; then echo 'KOSIS_API_KEY_PRESENT=true'; else echo 'KOSIS_API_KEY_PRESENT=false'; fi
 
-          urls=(
-            'https://kosis.kr/visual/nsportalStats/detailContents.do?listId=F&statJipyoId=3698&vStatJipyoId=4991'
-            'https://kosis.kr/serviceInfo/newContrainDataDetail.do?boardIdx=1964001&boardOrgId=101'
-            'https://kosis.kr/serviceInfo/openAPIGuide.do'
-          )
-          i=0
-          for url in "${urls[@]}"; do
-            i=$((i+1))
-            curl -L -fsS -A 'finance-data/0.1 (+https://github.com/kuil09/finance-data)' "$url" -o "/tmp/kosis-$i.html"
-            echo "=== PAGE $i URL=$url BYTES=$(wc -c < /tmp/kosis-$i.html) ==="
-            grep -Ein 'DT_[A-Za-z0-9_]+|tblId|orgId|itmId|objL1|objL2|statHtml|소비자물가지수|지출목적별' "/tmp/kosis-$i.html" | head -250 || true
+          for tbl in DT_1J20001 DT_1J20003; do
+            url="https://kosis.kr/statHtml/statHtml.do?orgId=101&tblId=${tbl}&conn_path=I2"
+            code=$(curl --connect-timeout 5 --max-time 12 -L -sS -A 'finance-data/0.1 (+https://github.com/kuil09/finance-data)' -o "/tmp/${tbl}.html" -w '%{http_code}' "$url" || true)
+            echo "=== TABLE $tbl HTTP=$code BYTES=$(wc -c < /tmp/${tbl}.html 2>/dev/null || echo 0) ==="
+            grep -Ein '통계표명|소비자물가지수|지출목적별|전국|총지수|2020=100|tblId|itm_id|obj_var_id' "/tmp/${tbl}.html" | head -120 || true
           done
 
-          echo '=== UNIQUE DT IDS ACROSS PAGES ==='
-          grep -Eho 'DT_[A-Za-z0-9_]+' /tmp/kosis-*.html | sort -u || true
-
-          echo '=== SCRIPT SOURCES FROM CPI INDICATOR PAGE ==='
-          grep -Eo '<script[^>]+src="[^"]+' /tmp/kosis-1.html | sed 's/.*src="//' | head -100 || true
+          if [[ -n "${KOSIS_API_KEY:-}" ]]; then
+            for tbl in DT_1J20001 DT_1J20003; do
+              for type in TBL ITM PRD; do
+                url="https://kosis.kr/openapi/statisticsData.do?method=getMeta&type=${type}&apiKey=${KOSIS_API_KEY}&orgId=101&tblId=${tbl}&format=json&content=json"
+                code=$(curl --connect-timeout 5 --max-time 12 -sS -o "/tmp/${tbl}-${type}.json" -w '%{http_code}' "$url" || true)
+                echo "=== API META $tbl $type HTTP=$code ==="
+                python - "$tbl" "$type" <<'PY'
+          import json,sys
+          p='/tmp/'+sys.argv[1]+'-'+sys.argv[2]+'.json'
+          try:
+              v=json.load(open(p))
+          except Exception as e:
+              print('JSON_ERROR',e); print(open(p,errors='replace').read()[:2000]); raise SystemExit
+          # Do not print request URLs because they contain the API key.
+          text=json.dumps(v,ensure_ascii=False,sort_keys=True)
+          print(text[:20000])
+          PY
+              done
+            done
+          fi
