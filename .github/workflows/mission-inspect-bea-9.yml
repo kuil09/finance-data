@@ -1,0 +1,52 @@
+name: mission-inspect-bea-9
+
+on:
+  push:
+    branches: [feat/9-bea-gdp]
+    paths:
+      - '.github/workflows/mission-inspect-bea-9.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    env:
+      BEA_API_KEY: ${{ secrets.BEA_API_KEY }}
+    steps:
+      - name: Inspect official BEA NIPA access paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "BEA_API_KEY_PRESENT=$([[ -n \"${BEA_API_KEY:-}\" ]] && echo true || echo false)"
+          for url in \
+            'https://apps.bea.gov/national/Release/TXT/NipaDataQ.zip' \
+            'https://apps.bea.gov/national/Release/TXT/NipaDataA.zip'; do
+            code=$(curl -L -sS -o /tmp/bea-download -w '%{http_code}' "$url" || true)
+            bytes=$(wc -c </tmp/bea-download 2>/dev/null || echo 0)
+            echo "DOWNLOAD $url HTTP=$code BYTES=$bytes"
+          done
+
+          if [[ -n "${BEA_API_KEY:-}" ]]; then
+            url="https://apps.bea.gov/api/data/?UserID=${BEA_API_KEY}&method=GetData&DataSetName=NIPA&TableName=T10105&Frequency=Q&Year=X&ResultFormat=JSON"
+            curl -fsS "$url" -o /tmp/bea.json
+            python - <<'PY'
+          import json
+          p=json.load(open('/tmp/bea.json'))
+          r=p['BEAAPI']['Results']
+          print('UTCProductionTime', r.get('UTCProductionTime'))
+          print('Statistic', r.get('Statistic'))
+          data=r.get('Data', [])
+          print('ROWS', len(data))
+          for row in data:
+              if str(row.get('LineNumber')) == '1':
+                  print('GDP_LINE_SAMPLE', json.dumps(row, sort_keys=True))
+                  break
+          print('NOTES_SAMPLE', json.dumps(r.get('Notes', [])[:3], sort_keys=True))
+          PY
+          else
+            code=$(curl -sS -o /tmp/bea-no-key.json -w '%{http_code}' 'https://apps.bea.gov/api/data/?UserID=&method=GetData&DataSetName=NIPA&TableName=T10105&Frequency=Q&Year=X&ResultFormat=JSON' || true)
+            echo "NO_KEY_API_HTTP=$code"
+            head -c 1000 /tmp/bea-no-key.json || true
+          fi
