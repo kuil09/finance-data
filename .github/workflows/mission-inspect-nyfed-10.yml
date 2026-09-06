@@ -13,37 +13,32 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Inspect official NY Fed SOFR API contract
+      - name: Inspect historical SOFR NA semantics
         shell: bash
         run: |
           set -euo pipefail
-          docs='https://markets.newyorkfed.org/static/docs/markets-api.html'
-          curl -fsS "$docs" -o /tmp/docs.html
-          echo 'DOC SEARCH ENDPOINT CONTEXT'
-          grep -Ein 'search.json|volumeInBillions|type=|volume' /tmp/docs.html | head -120 || true
-
-          base='https://markets.newyorkfed.org/api/rates/secured/sofr/search.json?startDate=2018-04-03&endDate=2026-09-06'
-          for mode in none rate volume rate-volume; do
-            case "$mode" in
-              none) url="$base" ;;
-              rate) url="$base&type=rate" ;;
-              volume) url="$base&type=volume" ;;
-              rate-volume) url="$base&type=rate,volume" ;;
-            esac
-            code=$(curl -sS -o "/tmp/$mode.json" -w '%{http_code}' "$url")
-            echo "MODE=$mode HTTP=$code BYTES=$(wc -c < /tmp/$mode.json)"
-            python - "$mode" <<'PY'
-          import json,sys
-          name=sys.argv[1]
-          try: p=json.load(open('/tmp/'+name+'.json'))
-          except Exception as e:
-              print(name, 'json_error=', e); raise SystemExit
-          rows=p.get('refRates')
-          print(name, 'top_keys=', sorted(p), 'rows=', len(rows) if isinstance(rows,list) else None)
-          if isinstance(rows,list) and rows:
-              print(name, 'first=', json.dumps(rows[0], sort_keys=True))
-              print(name, 'record_keys=', sorted({k for r in rows for k in r}))
-          else:
-              print(name, json.dumps(p, sort_keys=True)[:2000])
+          url='https://markets.newyorkfed.org/api/rates/secured/sofr/search.json?startDate=2018-04-03&endDate=2026-09-06&type=rate,volume'
+          curl -fsS "$url" -o /tmp/sofr.json
+          python - <<'PY'
+          import json, collections
+          rows=json.load(open('/tmp/sofr.json'))['refRates']
+          fields=['percentRate','percentPercentile1','percentPercentile25','percentPercentile75','percentPercentile99','volumeInBillions']
+          for field in fields:
+              bad=[r for r in rows if r.get(field) in (None,'','NA')]
+              print(field, 'missing_or_na=', len(bad))
+              if bad:
+                  print(field, 'first_examples=', json.dumps(bad[-5:], sort_keys=True))
+                  print(field, 'newest_examples=', json.dumps(bad[:5], sort_keys=True))
+          any_bad=[r for r in rows if any(r.get(f) in (None,'','NA') for f in fields)]
+          print('any_missing_or_na=', len(any_bad))
+          if any_bad:
+              dates=[r['effectiveDate'] for r in any_bad]
+              print('date_range=', min(dates), max(dates))
+              print('all_bad_rows=', json.dumps(any_bad, sort_keys=True))
+          footnotes=[r for r in rows if r.get('footnoteId') not in (None,'')]
+          print('footnoted=', len(footnotes))
+          print('footnotes=', json.dumps(footnotes, sort_keys=True))
+          revisions=[r for r in rows if r.get('revisionIndicator') not in (None,'')]
+          print('revisions=', len(revisions))
+          print('revision_rows=', json.dumps(revisions, sort_keys=True))
           PY
-          done
