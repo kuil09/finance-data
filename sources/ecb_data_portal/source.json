@@ -1,0 +1,37 @@
+{
+  "id": "ecb_data_portal",
+  "organization": {
+    "name": "European Central Bank",
+    "url": "https://www.ecb.europa.eu/"
+  },
+  "authority": {
+    "level": "primary",
+    "official": true
+  },
+  "access": {
+    "type": "sdmx_rest",
+    "base_url": "https://data-api.ecb.europa.eu/service/",
+    "documentation": "https://data.ecb.europa.eu/help/api/overview",
+    "authentication": "none",
+    "format": "sdmx_csv"
+  },
+  "data_contract": {
+    "raw_payloads_are_preserved": true,
+    "retrieval_metadata_is_preserved": true,
+    "source_dimensions_are_preserved": true,
+    "selected_series_is_fetched_in_full": true
+  },
+  "rights_gate": {
+    "reuse_policy_url": "https://www.ecb.europa.eu/home/what-we-do/services/reuse-ecb-data/html/index.en.html",
+    "fee": "free",
+    "commercial_use": "allowed",
+    "noncommercial_use": "allowed",
+    "attribution_required": true,
+    "statistics_and_metadata_must_not_be_modified": true,
+    "third_party_data_excluded_without_separate_permission": true,
+    "selected_series_is_ecb_originated": true,
+    "storage_permitted": true,
+    "redistribution_permitted": true,
+    "verified_on": "2026-09-07"
+  }
+}

@@ -1,0 +1,90 @@
+name: Collect ECB Deposit Facility Rate
+
+on:
+  schedule:
+    - cron: "30 8 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Run a complete historical collection"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: collect-ecb-deposit-rate
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Test collector
+        run: PYTHONPATH=src python -m unittest discover -s tests -v
+
+      - name: Collect, normalize, and validate
+        id: collect
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./bin/finance-data sync ea.monetary_policy.deposit_facility_rate --full | tee /tmp/finance-data-summary.json
+          ./bin/finance-data validate ea.monetary_policy.deposit_facility_rate
+          if [[ -z "$(git status --porcelain -- data/)" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish validated data PR
+        if: steps.collect.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="data/ecb-deposit-rate-update"
+          git config user.name "finance-data bot"
+          git config user.email "finance-data-bot@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add data/
+          git commit -m "data: update ECB deposit facility rate"
+          git push --force origin "$branch"
+
+          pr_number="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
+          if [[ -z "$pr_number" ]]; then
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "data: update ECB deposit facility rate" \
+              --body "Automated data-only update for \`ea.monetary_policy.deposit_facility_rate\`. Direct ECB Data Portal SDMX collection, immutable raw preservation, normalization, dataset validation, and unit tests passed before publication."
+            pr_number="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')"
+          fi
+          gh pr merge "$pr_number" --squash --delete-branch
+
+      - name: Open collection failure issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="ECB deposit facility rate collection failure"
+          existing="$(gh issue list --state open --search "${title} in:title" --json number --jq '.[0].number // empty')"
+          body="The scheduled \`ea.monetary_policy.deposit_facility_rate\` collection workflow failed. Inspect run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [[ -z "$existing" ]]; then
+            gh issue create --title "$title" --body "$body"
+          else
+            gh issue comment "$existing" --body "$body"
+          fi
