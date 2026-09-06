@@ -89,9 +89,20 @@ def _decimal(value: object, *, name: str, positive: bool = False) -> Decimal:
     return parsed
 
 
+def _optional_decimal(value: object, *, name: str) -> Decimal | None:
+    if value in (None, "", "NA", "null"):
+        return None
+    return _decimal(value, name=name)
+
+
 def _format_decimal(value: object, *, name: str, positive: bool = False) -> str:
     parsed = _decimal(value, name=name, positive=positive)
     return format(parsed, "f")
+
+
+def _format_optional_decimal(value: object, *, name: str) -> str:
+    parsed = _optional_decimal(value, name=name)
+    return "null" if parsed is None else format(parsed, "f")
 
 
 def validate_source_record(record: Mapping[str, object]) -> None:
@@ -114,31 +125,38 @@ def validate_source_record(record: Mapping[str, object]) -> None:
     if parsed_period < SOFR_START_DATE:
         raise DatasetValidationError(f"SOFR date precedes official history: {period}")
 
-    values = {
-        "percent_rate": _decimal(record["percent_rate"], name="percent_rate"),
-        "percentile_1": _decimal(record["percentile_1"], name="percentile_1"),
-        "percentile_25": _decimal(record["percentile_25"], name="percentile_25"),
-        "percentile_75": _decimal(record["percentile_75"], name="percentile_75"),
-        "percentile_99": _decimal(record["percentile_99"], name="percentile_99"),
-    }
-    if not (
-        values["percentile_1"]
-        <= values["percentile_25"]
-        <= values["percentile_75"]
-        <= values["percentile_99"]
-    ):
-        raise DatasetValidationError(f"SOFR percentile ordering is invalid for {period}")
-    if not (values["percentile_1"] <= values["percent_rate"] <= values["percentile_99"]):
-        raise DatasetValidationError(f"SOFR rate falls outside published percentiles for {period}")
-    if any(value < Decimal("-10") or value > Decimal("100") for value in values.values()):
-        raise DatasetValidationError(f"SOFR percent value outside sanity bounds for {period}")
-
-    _decimal(record["volume_billions"], name="volume_billions", positive=True)
     if not isinstance(record["revision_indicator"], str):
         raise DatasetValidationError("revision_indicator must be a string")
     footnote = record["footnote_id"]
     if footnote is not None and not isinstance(footnote, str):
         raise DatasetValidationError("footnote_id must be null or a string")
+
+    rate = _decimal(record["percent_rate"], name="percent_rate")
+    percentiles = [
+        _optional_decimal(record["percentile_1"], name="percentile_1"),
+        _optional_decimal(record["percentile_25"], name="percentile_25"),
+        _optional_decimal(record["percentile_75"], name="percentile_75"),
+        _optional_decimal(record["percentile_99"], name="percentile_99"),
+    ]
+    missing_percentiles = [value is None for value in percentiles]
+    if any(missing_percentiles):
+        if not all(missing_percentiles):
+            raise DatasetValidationError(f"SOFR percentiles must be all present or all unavailable: {period}")
+        if footnote is None:
+            raise DatasetValidationError(f"unavailable SOFR percentiles require a source footnote: {period}")
+    else:
+        p1, p25, p75, p99 = percentiles
+        assert p1 is not None and p25 is not None and p75 is not None and p99 is not None
+        if not (p1 <= p25 <= p75 <= p99):
+            raise DatasetValidationError(f"SOFR percentile ordering is invalid for {period}")
+        if not (p1 <= rate <= p99):
+            raise DatasetValidationError(f"SOFR rate falls outside published percentiles for {period}")
+
+    values = [rate, *(value for value in percentiles if value is not None)]
+    if any(value < Decimal("-10") or value > Decimal("100") for value in values):
+        raise DatasetValidationError(f"SOFR percent value outside sanity bounds for {period}")
+
+    _decimal(record["volume_billions"], name="volume_billions", positive=True)
 
 
 def normalize_source_record(record: Mapping[str, object]) -> dict[str, str]:
@@ -146,10 +164,10 @@ def normalize_source_record(record: Mapping[str, object]) -> dict[str, str]:
     return {
         "period": str(record["effective_date"]),
         "sofr_percent": _format_decimal(record["percent_rate"], name="percent_rate"),
-        "percentile_1_percent": _format_decimal(record["percentile_1"], name="percentile_1"),
-        "percentile_25_percent": _format_decimal(record["percentile_25"], name="percentile_25"),
-        "percentile_75_percent": _format_decimal(record["percentile_75"], name="percentile_75"),
-        "percentile_99_percent": _format_decimal(record["percentile_99"], name="percentile_99"),
+        "percentile_1_percent": _format_optional_decimal(record["percentile_1"], name="percentile_1"),
+        "percentile_25_percent": _format_optional_decimal(record["percentile_25"], name="percentile_25"),
+        "percentile_75_percent": _format_optional_decimal(record["percentile_75"], name="percentile_75"),
+        "percentile_99_percent": _format_optional_decimal(record["percentile_99"], name="percentile_99"),
         "volume_billions": _format_decimal(record["volume_billions"], name="volume_billions", positive=True),
         "revision_indicator": str(record["revision_indicator"]),
         "footnote_id": "" if record["footnote_id"] is None else str(record["footnote_id"]),
@@ -190,6 +208,7 @@ def validate(root: Path) -> dict[str, object]:
     by_period: dict[str, dict[str, str]] = {}
     revised = 0
     footnoted = 0
+    percentile_unavailable = 0
     for row in normalized:
         if tuple(row) != NORMALIZED_COLUMNS:
             raise DatasetValidationError(f"unexpected SOFR normalized columns: {tuple(row)!r}")
@@ -205,13 +224,26 @@ def validate(root: Path) -> dict[str, object]:
         if row["period"] in by_period:
             raise DatasetValidationError(f"duplicate normalized SOFR period: {row['period']}")
 
-        p1 = _decimal(row["percentile_1_percent"], name="percentile_1_percent")
-        p25 = _decimal(row["percentile_25_percent"], name="percentile_25_percent")
         rate = _decimal(row["sofr_percent"], name="sofr_percent")
-        p75 = _decimal(row["percentile_75_percent"], name="percentile_75_percent")
-        p99 = _decimal(row["percentile_99_percent"], name="percentile_99_percent")
-        if not (p1 <= p25 <= p75 <= p99 and p1 <= rate <= p99):
-            raise DatasetValidationError(f"invalid normalized SOFR distribution: {row['period']}")
+        percentiles = [
+            _optional_decimal(row["percentile_1_percent"], name="percentile_1_percent"),
+            _optional_decimal(row["percentile_25_percent"], name="percentile_25_percent"),
+            _optional_decimal(row["percentile_75_percent"], name="percentile_75_percent"),
+            _optional_decimal(row["percentile_99_percent"], name="percentile_99_percent"),
+        ]
+        missing_percentiles = [value is None for value in percentiles]
+        if any(missing_percentiles):
+            if not all(missing_percentiles):
+                raise DatasetValidationError(f"normalized SOFR percentiles are partially missing: {row['period']}")
+            if not row["footnote_id"]:
+                raise DatasetValidationError(f"normalized unavailable percentiles lack footnote: {row['period']}")
+            percentile_unavailable += 1
+        else:
+            p1, p25, p75, p99 = percentiles
+            assert p1 is not None and p25 is not None and p75 is not None and p99 is not None
+            if not (p1 <= p25 <= p75 <= p99 and p1 <= rate <= p99):
+                raise DatasetValidationError(f"invalid normalized SOFR distribution: {row['period']}")
+
         _decimal(row["volume_billions"], name="volume_billions", positive=True)
         if len(row["source_record_sha256"]) != 64:
             raise DatasetValidationError("invalid SOFR source record hash")
@@ -231,6 +263,7 @@ def validate(root: Path) -> dict[str, object]:
         "latest_period": normalized[-1]["period"] if normalized else None,
         "revised_records": revised,
         "footnoted_records": footnoted,
+        "percentile_unavailable_records": percentile_unavailable,
         "unit": "percent_and_billions_usd",
         "status": "PASS",
     }
