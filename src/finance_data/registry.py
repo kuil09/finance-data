@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from .datasets import bls_cpi, eia_crude_stocks, treasury_debt
+from .datasets import bea_gdp, bls_cpi, eia_crude_stocks, treasury_debt
 from .storage import DATASET_ID as TREASURY_DATASET_ID
 
 
@@ -30,6 +30,11 @@ DATASET_HANDLERS: dict[str, DatasetHandler] = {
         sync=bls_cpi.sync,
         rebuild=bls_cpi.rebuild,
         validate=bls_cpi.validate,
+    ),
+    bea_gdp.DATASET_ID: DatasetHandler(
+        sync=bea_gdp.sync,
+        rebuild=bea_gdp.rebuild,
+        validate=bea_gdp.validate,
     ),
 }
 SUPPORTED_DATASETS = tuple(sorted(DATASET_HANDLERS))
