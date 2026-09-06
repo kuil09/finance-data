@@ -1,0 +1,36 @@
+name: mission-inspect-nyfed-10
+
+on:
+  push:
+    branches: [feat/10-nyfed-sofr]
+    paths:
+      - '.github/workflows/mission-inspect-nyfed-10.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect official NY Fed SOFR API contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://markets.newyorkfed.org/api/rates/secured/sofr'
+          curl -fsS "$base/last/5.json" -o /tmp/last.json
+          curl -fsS "$base/search.json?startDate=2018-04-03&endDate=2026-09-06&type=rate" -o /tmp/all.json
+          python - <<'PY'
+          import json
+          for name in ('last','all'):
+              p=json.load(open('/tmp/'+name+'.json'))
+              rows=p.get('refRates')
+              print(name, 'top_keys=', sorted(p), 'rows=', len(rows) if isinstance(rows,list) else None)
+              if isinstance(rows,list) and rows:
+                  print(name, 'first=', json.dumps(rows[0], sort_keys=True))
+                  print(name, 'last=', json.dumps(rows[-1], sort_keys=True))
+                  print(name, 'record_keys=', sorted({k for r in rows for k in r}))
+                  revised=[r for r in rows if r.get('revisionIndicator')]
+                  print(name, 'revised_count=', len(revised))
+                  if revised: print(name, 'revised_sample=', json.dumps(revised[:5], sort_keys=True))
+          PY
