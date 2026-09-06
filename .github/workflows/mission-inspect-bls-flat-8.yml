@@ -17,8 +17,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsS https://download.bls.gov/pub/time.series/cu/cu.data.1.AllItems -o data.tsv
-          curl -fsS https://download.bls.gov/pub/time.series/cu/cu.footnote -o footnote.tsv
+          ua='finance-data/0.1 (+https://github.com/kuil09/finance-data/issues)'
+          curl -A "$ua" -fsS https://download.bls.gov/pub/time.series/cu/cu.data.1.AllItems -o data.tsv
+          curl -A "$ua" -fsS https://download.bls.gov/pub/time.series/cu/cu.footnote -o footnote.tsv
           echo 'DATA HEADER + FIRST ROWS'
           head -5 data.tsv | cat -vet
           echo 'TARGET RECENT ROWS'
