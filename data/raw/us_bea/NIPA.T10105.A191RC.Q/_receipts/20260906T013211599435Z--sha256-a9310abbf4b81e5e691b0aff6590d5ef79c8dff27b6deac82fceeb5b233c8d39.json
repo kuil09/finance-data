@@ -1,0 +1,40 @@
+{
+  "content_sha256": "a9310abbf4b81e5e691b0aff6590d5ef79c8dff27b6deac82fceeb5b233c8d39",
+  "pages": 3,
+  "record_count": 318,
+  "request": {
+    "access": "BEA NIPA flat files",
+    "dataset": "NIPA",
+    "files": {
+      "SeriesRegister.txt": {
+        "bytes": 971461,
+        "content_sha256": "a4ea3f149ac201679f489e5e3ea42e40dd91cacccd317694795ab5de8e542cf9",
+        "etag": "\"896c9a9e5635dd1:0\"",
+        "last_modified": "Wed, 26 Aug 2026 12:30:03 GMT",
+        "url": "https://apps.bea.gov/national/Release/TXT/SeriesRegister.txt"
+      },
+      "TablesRegister.txt": {
+        "bytes": 30449,
+        "content_sha256": "f5395223c44332353b6397171a76ad242888c393d4698fed18ac837137c71dcc",
+        "etag": "\"de8b79e5635dd1:0\"",
+        "last_modified": "Wed, 26 Aug 2026 12:30:03 GMT",
+        "url": "https://apps.bea.gov/national/Release/TXT/TablesRegister.txt"
+      },
+      "nipadataQ.txt": {
+        "bytes": 35397935,
+        "content_sha256": "7fa7dfb39b765e5cebfb0561f1dd9cc97527f96e9d630fadc01083c30044de83",
+        "etag": "\"7d35e89f5635dd1:0\"",
+        "last_modified": "Wed, 26 Aug 2026 12:30:05 GMT",
+        "url": "https://apps.bea.gov/national/Release/TXT/nipadataQ.txt"
+      }
+    },
+    "frequency": "Q",
+    "line_number": "1",
+    "series_code": "A191RC",
+    "table_id": "T10105"
+  },
+  "retrieved_at": "2026-09-06T01:32:11.599435Z",
+  "source": "us_bea",
+  "source_dataset": "NIPA.T10105.A191RC.Q",
+  "source_total_count": 318
+}
