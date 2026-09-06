@@ -27,13 +27,7 @@ PostJSON = Callable[[str, dict[str, object]], dict[str, object]]
 
 
 class BLSPublicDataAdapter:
-    """Access BLS Public Data API without requiring credentials.
-
-    A registration key is optional. When supplied explicitly or through
-    BLS_REGISTRATION_KEY, the adapter uses the registered v2 endpoint. The
-    dataset layer deliberately keeps requests within the unregistered 10-year
-    window as well, so a clean checkout remains fully reproducible without a key.
-    """
+    """Access the official BLS Public Data API without requiring credentials."""
 
     def __init__(
         self,
@@ -61,7 +55,7 @@ class BLSPublicDataAdapter:
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/json",
-                "User-Agent": "finance-data/0.1 (+https://github.com/kuil09/finance-data)",
+                "User-Agent": "finance-data/0.1 (+https://github.com/kuil09/finance-data/issues)",
             },
             method="POST",
         )
@@ -113,11 +107,17 @@ class BLSPublicDataAdapter:
             raise BLSDataError("BLS series does not contain a data array")
 
         records: list[dict[str, object]] = []
+        filtered_periods: set[str] = set()
         for observation in data:
             if not isinstance(observation, dict):
                 raise BLSDataError(f"unexpected BLS observation: {observation!r}")
-            record = {"series_id": series_id, **observation}
-            records.append(record)
+            period = observation.get("period")
+            # BLS examples explicitly filter API results to M01-M12 when a
+            # monthly series is wanted. Annual-average M13 is not this dataset.
+            if not isinstance(period, str) or not ("M01" <= period <= "M12"):
+                filtered_periods.add(str(period))
+                continue
+            records.append({"series_id": series_id, **observation})
 
         records.sort(key=lambda row: (str(row.get("year", "")), str(row.get("period", ""))))
         response_metadata = {
@@ -131,8 +131,10 @@ class BLSPublicDataAdapter:
                 "series_id": series_id,
                 "start_year": start_year,
                 "end_year": end_year,
+                "period_filter": "M01-M12",
+                "filtered_period_codes": sorted(filtered_periods),
                 "response_metadata": response_metadata,
             },
             pages=1,
-            source_total_count=len(records),
+            source_total_count=len(data),
         )
