@@ -19,14 +19,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "BEA_API_KEY_PRESENT=$([[ -n \"${BEA_API_KEY:-}\" ]] && echo true || echo false)"
-          for url in \
-            'https://apps.bea.gov/national/Release/TXT/NipaDataQ.zip' \
-            'https://apps.bea.gov/national/Release/TXT/NipaDataA.zip'; do
-            code=$(curl -L -sS -o /tmp/bea-download -w '%{http_code}' "$url" || true)
-            bytes=$(wc -c </tmp/bea-download 2>/dev/null || echo 0)
-            echo "DOWNLOAD $url HTTP=$code BYTES=$bytes"
-          done
+          if [[ -n "${BEA_API_KEY:-}" ]]; then echo 'BEA_API_KEY_PRESENT=true'; else echo 'BEA_API_KEY_PRESENT=false'; fi
+          curl -L -fsS 'https://apps.bea.gov/national/Release/TXT/NipaDataQ.zip' -o /tmp/nipa-q.zip
+          file /tmp/nipa-q.zip
+          sha256sum /tmp/nipa-q.zip
+          unzip -l /tmp/nipa-q.zip | head -60
+          echo 'T10105 SAMPLE'
+          name=$(unzip -Z1 /tmp/nipa-q.zip | grep -E 'T10105.*(csv|txt)$' | head -1 || true)
+          echo "ENTRY=$name"
+          if [[ -n "$name" ]]; then unzip -p /tmp/nipa-q.zip "$name" | head -12; fi
 
           if [[ -n "${BEA_API_KEY:-}" ]]; then
             url="https://apps.bea.gov/api/data/?UserID=${BEA_API_KEY}&method=GetData&DataSetName=NIPA&TableName=T10105&Frequency=Q&Year=X&ResultFormat=JSON"
@@ -43,10 +44,7 @@ jobs:
               if str(row.get('LineNumber')) == '1':
                   print('GDP_LINE_SAMPLE', json.dumps(row, sort_keys=True))
                   break
-          print('NOTES_SAMPLE', json.dumps(r.get('Notes', [])[:3], sort_keys=True))
           PY
           else
-            code=$(curl -sS -o /tmp/bea-no-key.json -w '%{http_code}' 'https://apps.bea.gov/api/data/?UserID=&method=GetData&DataSetName=NIPA&TableName=T10105&Frequency=Q&Year=X&ResultFormat=JSON' || true)
-            echo "NO_KEY_API_HTTP=$code"
-            head -c 1000 /tmp/bea-no-key.json || true
+            curl -sS 'https://apps.bea.gov/api/data/?UserID=&method=GetData&DataSetName=NIPA&TableName=T10105&Frequency=Q&Year=X&ResultFormat=JSON' | head -c 1000
           fi
