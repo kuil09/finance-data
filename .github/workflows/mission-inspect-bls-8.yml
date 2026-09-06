@@ -1,8 +1,7 @@
 name: mission-inspect-bls-8
 
 on:
-  push:
-    branches: [feat/8-bls-cpi]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -12,14 +11,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Inspect official BLS CPI response contract
-        shell: bash
-        run: |
-          set -euo pipefail
-          for range in '2025 2026' '1913 1922'; do
-            set -- $range
-            curl -fsS -X POST \
-              -H 'Content-Type: application/json' \
-              -d "{\"seriesid\":[\"CUUR0000SA0\"],\"startyear\":\"$1\",\"endyear\":\"$2\"}" \
-              https://api.bls.gov/publicAPI/v1/timeseries/data/ \
-              | python -m json.tool
-          done
+        run: echo "Inspection retained only as a manual record; do not consume API quota automatically."
