@@ -13,39 +13,45 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     timeout-minutes: 3
-    env:
-      KOSIS_API_KEY: ${{ secrets.KOSIS_API_KEY }}
     steps:
-      - name: Inspect current KOSIS CPI identifiers and credential availability
+      - name: Inspect public KOSIS CPI indicator machine calls
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -n "${KOSIS_API_KEY:-}" ]]; then echo 'KOSIS_API_KEY_PRESENT=true'; else echo 'KOSIS_API_KEY_PRESENT=false'; fi
+          ua='finance-data/0.1 (+https://github.com/kuil09/finance-data)'
+          page='https://kosis.kr/visual/nsportalStats/detailContents.do?listId=F&statJipyoId=3698&vStatJipyoId=4991'
+          curl --connect-timeout 5 --max-time 15 -L -fsS -A "$ua" "$page" -o /tmp/cpi.html
+          echo "PAGE_BYTES=$(wc -c </tmp/cpi.html)"
+          echo '=== CPI PAGE IDENTIFIERS / URL FRAGMENTS ==='
+          grep -Ein '3698|4991|DT_[A-Za-z0-9_]+|tblId|orgId|itmId|objL1|ajax|json|detailContents|statJipyo|jipyo|chart|data' /tmp/cpi.html | head -400 || true
 
-          for tbl in DT_1J20001 DT_1J20003; do
-            url="https://kosis.kr/statHtml/statHtml.do?orgId=101&tblId=${tbl}&conn_path=I2"
-            code=$(curl --connect-timeout 5 --max-time 12 -L -sS -A 'finance-data/0.1 (+https://github.com/kuil09/finance-data)' -o "/tmp/${tbl}.html" -w '%{http_code}' "$url" || true)
-            echo "=== TABLE $tbl HTTP=$code BYTES=$(wc -c < /tmp/${tbl}.html 2>/dev/null || echo 0) ==="
-            grep -Ein '통계표명|소비자물가지수|지출목적별|전국|총지수|2020=100|tblId|itm_id|obj_var_id' "/tmp/${tbl}.html" | head -120 || true
-          done
-
-          if [[ -n "${KOSIS_API_KEY:-}" ]]; then
-            for tbl in DT_1J20001 DT_1J20003; do
-              for type in TBL ITM PRD; do
-                url="https://kosis.kr/openapi/statisticsData.do?method=getMeta&type=${type}&apiKey=${KOSIS_API_KEY}&orgId=101&tblId=${tbl}&format=json&content=json"
-                code=$(curl --connect-timeout 5 --max-time 12 -sS -o "/tmp/${tbl}-${type}.json" -w '%{http_code}' "$url" || true)
-                echo "=== API META $tbl $type HTTP=$code ==="
-                python - "$tbl" "$type" <<'PY'
-          import json,sys
-          p='/tmp/'+sys.argv[1]+'-'+sys.argv[2]+'.json'
-          try:
-              v=json.load(open(p))
-          except Exception as e:
-              print('JSON_ERROR',e); print(open(p,errors='replace').read()[:2000]); raise SystemExit
-          # Do not print request URLs because they contain the API key.
-          text=json.dumps(v,ensure_ascii=False,sort_keys=True)
-          print(text[:20000])
+          echo '=== SCRIPT SOURCES ==='
+          python - <<'PY'
+          import re
+          from urllib.parse import urljoin
+          text=open('/tmp/cpi.html',encoding='utf-8',errors='replace').read()
+          base='https://kosis.kr/visual/nsportalStats/detailContents.do?listId=F&statJipyoId=3698&vStatJipyoId=4991'
+          for src in re.findall(r'<script[^>]+src=["\']([^"\']+)', text, re.I):
+              print(urljoin(base,src))
           PY
-              done
-            done
-          fi
+
+          python - <<'PY' > /tmp/scripts.txt
+          import re
+          from urllib.parse import urljoin
+          text=open('/tmp/cpi.html',encoding='utf-8',errors='replace').read()
+          base='https://kosis.kr/visual/nsportalStats/detailContents.do?listId=F&statJipyoId=3698&vStatJipyoId=4991'
+          for src in re.findall(r'<script[^>]+src=["\']([^"\']+)', text, re.I):
+              print(urljoin(base,src))
+          PY
+          n=0
+          while IFS= read -r src; do
+            n=$((n+1))
+            [[ $n -gt 30 ]] && break
+            if curl --connect-timeout 4 --max-time 10 -L -fsS -A "$ua" "$src" -o "/tmp/script-$n.js"; then
+              hits=$(grep -Ein 'statJipyo|vStatJipyo|detailContents|ajax|\.do|json|tblId|orgId|itmId|chartData|select.*Jipyo|select.*Stat' "/tmp/script-$n.js" | head -160 || true)
+              if [[ -n "$hits" ]]; then
+                echo "=== SCRIPT $n $src ==="
+                echo "$hits"
+              fi
+            fi
+          done < /tmp/scripts.txt
