@@ -1,0 +1,78 @@
+name: mission-inspect-kcs-13
+
+on:
+  push:
+    branches: [feat/13-kcs-trade]
+    paths:
+      - '.github/workflows/mission-inspect-kcs-13.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      KCS_SERVICE_KEY: ${{ secrets.KCS_SERVICE_KEY }}
+      DATA_GO_KR_SERVICE_KEY: ${{ secrets.DATA_GO_KR_SERVICE_KEY }}
+    steps:
+      - name: Inspect credential and official KCS trade access contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${KCS_SERVICE_KEY:-}" ]]; then echo 'KCS_SERVICE_KEY_PRESENT=true'; else echo 'KCS_SERVICE_KEY_PRESENT=false'; fi
+          if [[ -n "${DATA_GO_KR_SERVICE_KEY:-}" ]]; then echo 'DATA_GO_KR_SERVICE_KEY_PRESENT=true'; else echo 'DATA_GO_KR_SERVICE_KEY_PRESENT=false'; fi
+
+          key="${KCS_SERVICE_KEY:-${DATA_GO_KR_SERVICE_KEY:-}}"
+          if [[ -n "$key" ]]; then
+            python - <<'PY'
+          import os, urllib.parse, urllib.request, xml.etree.ElementTree as ET
+          key=os.environ.get('KCS_SERVICE_KEY') or os.environ.get('DATA_GO_KR_SERVICE_KEY')
+          base='https://apis.data.go.kr/1220000/nitemtrade/getNitemtradeList'
+          params={
+              'serviceKey': key,
+              'strtYymm': '202601',
+              'endYymm': '202601',
+              'cntyCd': 'US',
+          }
+          # service keys can already be percent-encoded; preserve the exact configured value.
+          query='&'.join(
+              f"{urllib.parse.quote(k)}={v if k=='serviceKey' else urllib.parse.quote(v)}"
+              for k,v in params.items()
+          )
+          req=urllib.request.Request(base+'?'+query,headers={'User-Agent':'finance-data/0.1 (+https://github.com/kuil09/finance-data)'})
+          with urllib.request.urlopen(req,timeout=20) as r:
+              body=r.read()
+              print('LIVE_HTTP=',r.status,'BYTES=',len(body))
+          root=ET.fromstring(body)
+          print('ROOT=',root.tag)
+          result_code=root.findtext('.//resultCode')
+          result_msg=root.findtext('.//resultMsg')
+          print('RESULT_CODE=',result_code,'RESULT_MSG=',result_msg)
+          items=root.findall('.//item')
+          print('ITEM_COUNT=',len(items))
+          if items:
+              fields=sorted({child.tag for item in items for child in list(item)})
+              print('FIELDS=',fields)
+              for item in items[:5]:
+                  print('SAMPLE=',{child.tag: child.text for child in list(item)})
+          PY
+          else
+            echo 'LIVE_API_PROBE=SKIPPED_NO_KEY'
+          fi
+
+          echo '=== OFFICIAL PORTAL RELATED FILE-LINK DISCOVERY ==='
+          ua='finance-data/0.1 (+https://github.com/kuil09/finance-data)'
+          api_page='https://www.data.go.kr/data/15100475/openapi.do'
+          curl --connect-timeout 5 --max-time 20 -L -fsS -A "$ua" "$api_page" -o /tmp/api-page.html
+          echo "API_PAGE_BYTES=$(wc -c </tmp/api-page.html)"
+          grep -Eo 'https?://[^"<> ]+|/data/[0-9]+/fileData\.do[^"<> ]*|fileData\.do[^"<> ]*' /tmp/api-page.html \
+            | grep -Ei 'fileData|수출입|15100475' \
+            | head -80 || true
+          grep -Ein '월별.?품목별.?국가별.?수출입실적|관련.?데이터|fileData|품목별 국가별 수출입실적' /tmp/api-page.html | head -120 || true
+
+          search='https://www.data.go.kr/tcs/dss/selectDataSetList.do?keyword=%EA%B4%80%EC%84%B8%EC%B2%AD_%EC%9B%94%EB%B3%84_%ED%92%88%EB%AA%A9%EB%B3%84_%EA%B5%AD%EA%B0%80%EB%B3%84%20%EC%88%98%EC%B6%9C%EC%9E%85%EC%8B%A4%EC%A0%81'
+          curl --connect-timeout 5 --max-time 20 -L -fsS -A "$ua" "$search" -o /tmp/search.html || true
+          grep -Eo '/data/[0-9]+/(?:fileData|openapi)\.do[^"<> ]*' /tmp/search.html | sort -u | head -100 || true
+          grep -Ein '월별.?품목별.?국가별.?수출입실적|fileData\.do|15100475' /tmp/search.html | head -160 || true
