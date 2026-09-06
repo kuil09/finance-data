@@ -1,0 +1,28 @@
+name: mission-inspect-bls-flat-8
+
+on:
+  push:
+    branches: [feat/8-bls-cpi]
+    paths:
+      - '.github/workflows/mission-inspect-bls-flat-8.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect official BLS flat files without API calls
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS https://download.bls.gov/pub/time.series/cu/cu.data.1.AllItems -o data.tsv
+          curl -fsS https://download.bls.gov/pub/time.series/cu/cu.footnote -o footnote.tsv
+          echo 'DATA HEADER + FIRST ROWS'
+          head -5 data.tsv | cat -vet
+          echo 'TARGET RECENT ROWS'
+          grep '^CUUR0000SA0' data.tsv | tail -18 | cat -vet
+          echo 'FOOTNOTE HEADER + X'
+          head -5 footnote.tsv | cat -vet
+          grep -E '^X[[:space:]]' footnote.tsv | head -5 | cat -vet || true
