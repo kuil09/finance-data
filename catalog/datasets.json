@@ -8,6 +8,13 @@
       "frequency": "daily"
     },
     {
+      "id": "global.leading_indicators.oecd_cli",
+      "title": "OECD Composite Leading Indicator",
+      "manifest": "datasets/global/leading_indicators/oecd_cli/dataset.json",
+      "source": "oecd_data_explorer",
+      "frequency": "monthly"
+    },
+    {
       "id": "kr.monetary_policy.base_rate",
       "title": "Bank of Korea Base Rate",
       "manifest": "datasets/kr/monetary_policy/base_rate/dataset.json",
