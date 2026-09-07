@@ -13,32 +13,20 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Inspect OECD CLI SDMX CSV contract
+      - name: Verify shared SDMX adapter query compatibility
         shell: bash
         run: |
           set -euo pipefail
-          url='https://sdmx.oecd.org/public/rest/data/OECD.SDD.STES,DSD_STES@DF_CLI,4.1/.M.LI...AA...H?dimensionAtObservation=AllDimensions'
-          for accept in \
-            'text/csv' \
-            'application/vnd.sdmx.data+csv;version=2.0.0'; do
-            label=$(echo "$accept" | tr '/;=+.' '______')
-            code=$(curl -sS -o "/tmp/$label" -w '%{http_code}' -H "Accept: $accept" "$url")
-            echo "ACCEPT=$accept HTTP=$code BYTES=$(wc -c < /tmp/$label)"
-            file "/tmp/$label"
-            head -2 "/tmp/$label" | cut -c1-300
-          done
-
-          curl -fsS -H 'Accept: text/csv' "$url" -o /tmp/oecd.csv
+          url='https://sdmx.oecd.org/public/rest/data/OECD.SDD.STES,DSD_STES@DF_CLI,4.1/.M.LI...AA...H?format=csvdata&detail=full&dimensionAtObservation=AllDimensions'
+          code=$(curl -sS -o /tmp/oecd.csv -w '%{http_code}' -H 'Accept: text/csv' "$url")
+          echo "HTTP=$code BYTES=$(wc -c < /tmp/oecd.csv)"
+          head -2 /tmp/oecd.csv | cut -c1-300
           python - <<'PY'
-          import csv,json
+          import csv
           rows=list(csv.DictReader(open('/tmp/oecd.csv',encoding='utf-8-sig',newline='')))
           print('ROWS=',len(rows))
-          print('FIELDS=',json.dumps(list(rows[0]) if rows else [],ensure_ascii=False))
-          if rows:
-              print('FIRST=',json.dumps(rows[0],ensure_ascii=False,sort_keys=True))
-              print('LAST=',json.dumps(rows[-1],ensure_ascii=False,sort_keys=True))
-              for field in ('REF_AREA','FREQ','MEASURE','ADJUSTMENT','TRANSFORMATION','CALCULATION','UNIT_MEASURE','OBS_STATUS','OBS_CONF','TIME_PERIOD'):
-                  if field in rows[0]:
-                      values=sorted({str(r.get(field,'')) for r in rows})
-                      print(field,'COUNT=',len(values),'SAMPLE=',json.dumps(values[:50],ensure_ascii=False))
+          assert len(rows) == 14219, len(rows)
+          assert rows[0]['MEASURE'] == 'LI'
+          assert rows[0]['ADJUSTMENT'] == 'AA'
+          assert rows[0]['METHODOLOGY'] == 'H'
           PY
