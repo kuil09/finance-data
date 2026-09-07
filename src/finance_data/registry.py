@@ -11,6 +11,7 @@ from .datasets import (
     ecb_deposit_rate,
     eia_crude_stocks,
     nyfed_sofr,
+    oecd_cli,
     treasury_debt,
 )
 from .storage import DATASET_ID as TREASURY_DATASET_ID
@@ -58,6 +59,11 @@ DATASET_HANDLERS: dict[str, DatasetHandler] = {
         sync=ecb_deposit_rate.sync,
         rebuild=ecb_deposit_rate.rebuild,
         validate=ecb_deposit_rate.validate,
+    ),
+    oecd_cli.DATASET_ID: DatasetHandler(
+        sync=oecd_cli.sync,
+        rebuild=oecd_cli.rebuild,
+        validate=oecd_cli.validate,
     ),
 }
 SUPPORTED_DATASETS = tuple(sorted(DATASET_HANDLERS))
