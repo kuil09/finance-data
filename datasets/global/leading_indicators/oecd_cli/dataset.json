@@ -1,0 +1,84 @@
+{
+  "id": "global.leading_indicators.oecd_cli",
+  "title": "OECD Composite Leading Indicator",
+  "description": "Monthly OECD harmonised amplitude-adjusted Composite Leading Indicator across all source-published reference areas.",
+  "classification": {
+    "geography": "GLOBAL",
+    "domain": "leading_indicators",
+    "topic": "oecd_composite_leading_indicator"
+  },
+  "source": {
+    "id": "oecd_data_explorer",
+    "dataflow": "OECD.SDD.STES,DSD_STES@DF_CLI,4.1",
+    "key": ".M.LI...AA...H"
+  },
+  "temporal": {
+    "frequency": "monthly",
+    "period_field": "period",
+    "source_period_field": "TIME_PERIOD",
+    "coverage_varies_by_reference_area": true,
+    "resampled": false
+  },
+  "dimensions": {
+    "REF_AREA": "preserved",
+    "FREQ": "M",
+    "MEASURE": "LI",
+    "UNIT_MEASURE": "IX",
+    "ACTIVITY": "_Z",
+    "ADJUSTMENT": "AA",
+    "TRANSFORMATION": "IX",
+    "TIME_HORIZ": "_Z",
+    "METHODOLOGY": "H"
+  },
+  "measures": {
+    "cli_index": {
+      "source_field": "OBS_VALUE",
+      "unit": "amplitude_adjusted_index",
+      "type": "decimal",
+      "nullable": false
+    }
+  },
+  "source_metadata": {
+    "observation_status_field": "OBS_STATUS",
+    "unit_multiplier": "0",
+    "decimals_field": "DECIMALS",
+    "base_period_field": "BASE_PER"
+  },
+  "revision_semantics": {
+    "full_selected_slice_refetched_each_sync": true,
+    "source_corrections_replace_canonical_area_period": true,
+    "raw_snapshots_preserve_prior_retrievals": true
+  },
+  "provenance": {
+    "source_record_locator": ["REF_AREA", "TIME_PERIOD"],
+    "normalized_hash_field": "source_record_sha256",
+    "raw_sdmx_row_preserved": true
+  },
+  "validation": {
+    "selected_dimensions_exact": true,
+    "area_period_unique": true,
+    "monthly_order_strict_within_reference_area": true,
+    "source_record_count_matches_normalized": true,
+    "value_bounds": [0, 200]
+  },
+  "storage": {
+    "raw": "data/raw/oecd_data_explorer/OECD.SDD.STES.DSD_STES_DF_CLI.4.1.M.LI.AA.H/sha256-*/",
+    "normalized": "data/normalized/global.leading_indicators.oecd_cli/year=YYYY/data.csv",
+    "normalized_format": "csv"
+  },
+  "rights": {
+    "terms_url": "https://www.oecd.org/en/about/terms-conditions.html",
+    "attribution_required": true,
+    "third_party_data_requires_separate_review": true,
+    "selected_slice_has_no_identified_separate_third_party_restriction": true,
+    "storage_permitted": true,
+    "redistribution_permitted": true
+  },
+  "non_goals": [
+    "recession probability derivation",
+    "country aggregation",
+    "resampling",
+    "forecasting",
+    "turning-point interpretation"
+  ]
+}
