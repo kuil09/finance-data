@@ -1,0 +1,12 @@
+{
+  "access": "official_sdmx_rest",
+  "base_url": "https://sdmx.oecd.org/public/rest",
+  "dataflow": "OECD.SDD.STES,DSD_STES@DF_CLI,4.1",
+  "format": "csvdata",
+  "key": ".M.LI...AA...H",
+  "parameters": {
+    "detail": "full",
+    "dimensionAtObservation": "AllDimensions",
+    "format": "csvdata"
+  }
+}
