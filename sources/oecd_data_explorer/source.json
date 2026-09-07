@@ -1,0 +1,37 @@
+{
+  "id": "oecd_data_explorer",
+  "organization": {
+    "name": "Organisation for Economic Co-operation and Development",
+    "url": "https://www.oecd.org/"
+  },
+  "authority": {
+    "level": "intergovernmental_official",
+    "official": true
+  },
+  "access": {
+    "type": "sdmx_rest",
+    "base_url": "https://sdmx.oecd.org/public/rest/",
+    "documentation": "https://data-explorer.oecd.org/",
+    "authentication": "none",
+    "format": "sdmx_csv"
+  },
+  "data_contract": {
+    "raw_payloads_are_preserved": true,
+    "retrieval_metadata_is_preserved": true,
+    "source_dimensions_are_preserved": true,
+    "selected_slice_is_fetched_in_full": true
+  },
+  "rights_gate": {
+    "terms_url": "https://www.oecd.org/en/about/terms-conditions.html",
+    "fee": "free",
+    "commercial_use": "allowed_unless_dataset_specific_restriction_applies",
+    "noncommercial_use": "allowed_unless_dataset_specific_restriction_applies",
+    "attribution_required": true,
+    "sublicenses_must_carry_acknowledgment_requirement": true,
+    "third_party_data_requires_separate_review": true,
+    "selected_cli_slice_has_no_identified_separate_third_party_restriction": true,
+    "storage_permitted": true,
+    "redistribution_permitted": true,
+    "verified_on": "2026-09-07"
+  }
+}
