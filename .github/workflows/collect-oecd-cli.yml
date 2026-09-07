@@ -1,0 +1,84 @@
+name: Collect OECD Composite Leading Indicator
+
+on:
+  schedule:
+    - cron: "20 9 * * 2"
+  workflow_dispatch:
+
+concurrency:
+  group: collect-oecd-cli
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Test collector
+        run: PYTHONPATH=src python -m unittest discover -s tests -v
+
+      - name: Collect, normalize, and validate
+        id: collect
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./bin/finance-data sync global.leading_indicators.oecd_cli --full | tee /tmp/finance-data-summary.json
+          ./bin/finance-data validate global.leading_indicators.oecd_cli
+          if [[ -z "$(git status --porcelain -- data/)" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish validated data PR
+        if: steps.collect.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="data/oecd-cli-update"
+          git config user.name "finance-data bot"
+          git config user.email "finance-data-bot@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add data/
+          git commit -m "data: update OECD composite leading indicator"
+          git push --force origin "$branch"
+
+          pr_number="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
+          if [[ -z "$pr_number" ]]; then
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "data: update OECD composite leading indicator" \
+              --body "Automated data-only update for \`global.leading_indicators.oecd_cli\`. Direct OECD public SDMX collection, immutable raw preservation, normalization, dataset validation, and unit tests passed before publication."
+            pr_number="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')"
+          fi
+          gh pr merge "$pr_number" --squash --delete-branch
+
+      - name: Open collection failure issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="OECD CLI collection failure"
+          existing="$(gh issue list --state open --search "${title} in:title" --json number --jq '.[0].number // empty')"
+          body="The scheduled \`global.leading_indicators.oecd_cli\` collection workflow failed. Inspect run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [[ -z "$existing" ]]; then
+            gh issue create --title "$title" --body "$body"
+          else
+            gh issue comment "$existing" --body "$body"
+          fi
